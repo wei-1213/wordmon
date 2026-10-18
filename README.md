@@ -2,7 +2,7 @@
 
 用玩遊戲的方式學單字。扮演魔法學院的見習魔法師，答題賺經驗和金幣，培育六大元素的精靈。
 
-**線上玩：** [https://你的帳號.github.io/wordmon/](https://wei-1213.github.io/wordmon/)
+**線上玩：** https://wei-1213.github.io/wordmon/
 
 ## 玩法
 
