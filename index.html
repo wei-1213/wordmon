@@ -1,0 +1,1045 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wordmon</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: left nav / centre stage / right status panel on desktop; single column with bottom nav on phones. Single warm fantasy look by design. */
+:root{
+  --cream:#fff8ec; --paper:#fffdf6; --beige:#f1e4cc; --beige-d:#dcc9a6;
+  --purple:#8b6bc9; --purple-d:#5d4296; --purple-l:#e6dcf8;
+  --brown:#4a3226; --brown-l:#7d6150; --gold:#e6c36a; --gold-d:#b8902f;
+  --good:#4f9b5a; --bad:#cf5a4a;
+  --shadow:0 6px 18px rgba(74,50,38,.14);
+  --serif:'Noto Serif TC','Songti TC','PMingLiU',serif;
+  --sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--cream);color:var(--brown);font:15px/1.55 var(--sans);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 24px;
+  background-image:radial-gradient(circle at 12% 0%,#efe3ff 0,transparent 38%),radial-gradient(circle at 100% 30%,#fbe9c8 0,transparent 35%);background-attachment:fixed}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+.app{max-width:1240px;margin:0 auto;display:grid;gap:16px;grid-template-columns:200px minmax(0,1fr) 270px;grid-template-areas:"top top top" "nav view aside"}
+#topbar{grid-area:top}#nav{grid-area:nav}#view{grid-area:view;min-width:0}#aside{grid-area:aside;min-width:0}
+.card{background:var(--paper);border:2px solid var(--beige-d);border-radius:18px;box-shadow:var(--shadow);padding:16px;position:relative}
+.card.gilt{border-color:var(--gold);box-shadow:var(--shadow),inset 0 0 0 3px #fff6dc}
+h1,h2,h3{font-family:var(--serif);margin:0;text-wrap:balance}
+h2{font-size:22px;margin-bottom:10px}h3{font-size:17px;margin-bottom:6px}
+.muted{color:var(--brown-l)}.small{font-size:13px}
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px}
+.logo{font-family:var(--serif);font-weight:900;font-size:26px;color:var(--purple-d);letter-spacing:.02em;display:flex;align-items:center;gap:8px;margin-right:auto}
+.logo svg{width:34px;height:34px}
+.lvl{display:flex;flex-direction:column;gap:4px;min-width:200px;flex:1 1 220px;max-width:340px}
+.lvl-t{display:flex;justify-content:space-between;font-weight:700;font-size:13px}
+.bar{height:12px;border-radius:99px;background:var(--beige);border:2px solid var(--beige-d);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),#b79af0);transition:width .5s}
+.bar.gold>i{background:linear-gradient(90deg,var(--gold-d),var(--gold))}
+.coins{display:flex;align-items:center;gap:6px;font-weight:900;background:#fff3cf;border:2px solid var(--gold);border-radius:99px;padding:3px 12px}
+.coin{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,var(--gold) 55%,var(--gold-d));border:2px solid var(--gold-d)}
+.seg{display:inline-flex;border:2px solid var(--purple);border-radius:99px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:5px 14px;font-weight:700;color:var(--purple-d)}
+.seg button[aria-pressed=true]{background:var(--purple);color:#fff}
+/* nav */
+.nav{display:flex;flex-direction:column;gap:6px;position:sticky;top:12px;align-self:start}
+.nav button{display:flex;align-items:center;gap:10px;border:2px solid transparent;background:transparent;border-radius:14px;padding:10px 12px;font-weight:700;text-align:left}
+.nav button:hover{background:var(--purple-l)}
+.nav button[aria-current=page]{background:var(--paper);border-color:var(--purple);color:var(--purple-d);box-shadow:var(--shadow)}
+.nav svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* buttons */
+.btn{border:2px solid var(--purple-d);background:linear-gradient(#a283e0,var(--purple));color:#fff;font-weight:900;border-radius:14px;padding:11px 22px;box-shadow:0 4px 0 var(--purple-d);transition:transform .08s,box-shadow .08s;font-size:16px}
+.btn:hover{filter:brightness(1.05)}.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--purple-d)}
+.btn.gold{background:linear-gradient(#f3d98a,var(--gold));border-color:var(--gold-d);color:var(--brown);box-shadow:0 4px 0 var(--gold-d)}
+.btn.ghost{background:var(--paper);color:var(--purple-d);box-shadow:0 4px 0 var(--beige-d);border-color:var(--beige-d)}
+.btn:disabled{filter:grayscale(.7) opacity(.6);cursor:not-allowed;transform:none;box-shadow:0 4px 0 var(--beige-d)}
+.btn.big{font-size:19px;padding:14px 30px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* hero */
+.hero{padding:0;overflow:hidden;min-height:340px;border-radius:22px}
+.hero .scene{position:absolute;inset:0;width:100%;height:100%}
+.hero .pet{position:absolute;left:50%;bottom:62px;width:210px;transform:translateX(-50%);animation:bob 3s ease-in-out infinite}
+.hero .cta{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center}
+.hero .tag{position:absolute;left:14px;top:14px;background:rgba(255,253,246,.9);border:2px solid var(--beige-d);border-radius:12px;padding:6px 12px;font-weight:700}
+@keyframes bob{50%{transform:translateX(-50%) translateY(-8px)}}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.menu button{background:var(--paper);border:2px solid var(--beige-d);border-radius:16px;padding:14px;text-align:left;box-shadow:var(--shadow)}
+.menu button:hover{border-color:var(--purple)}
+.menu b{display:block;font-family:var(--serif);font-size:16px}
+/* quiz */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--beige);border:2px solid var(--beige-d)}
+.dots i.ok{background:var(--good);border-color:#357a40}.dots i.no{background:var(--bad);border-color:#a23d30}.dots i.cur{border-color:var(--purple);background:var(--purple-l)}
+.word{text-align:center;padding:26px 8px 18px}
+.word .w{overflow-wrap:anywhere;font-size:clamp(44px,12vw,72px);font-weight:900;line-height:1.15;font-family:var(--sans)}
+.word .r{color:var(--brown-l);font-size:18px;min-height:27px}
+.speak{border:2px solid var(--beige-d);background:var(--paper);border-radius:99px;padding:4px 14px;font-weight:700;margin-top:6px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{display:flex;align-items:center;gap:10px;min-height:64px;text-align:left;border:2px solid var(--beige-d);background:#fff;border-radius:16px;padding:10px 14px;font-size:18px;font-weight:700;box-shadow:0 4px 0 var(--beige-d)}
+.choice:hover:not(:disabled){border-color:var(--purple);background:var(--purple-l)}
+.choice .k{flex:none;width:28px;height:28px;border-radius:50%;background:var(--beige);display:grid;place-items:center;font-size:13px}
+.choice.right{background:#e3f5e1;border-color:var(--good);box-shadow:0 4px 0 #357a40}
+.choice.wrong{background:#fde5e1;border-color:var(--bad);box-shadow:0 4px 0 #a23d30;animation:shake .35s}
+.choice:disabled{cursor:default}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.fb{margin-top:14px;border-radius:14px;padding:12px 14px;font-weight:700;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.fb.ok{background:#e3f5e1;border:2px solid var(--good)}.fb.no{background:#fde5e1;border:2px solid var(--bad)}
+.fb .gain{font-size:13px;color:var(--brown-l)}
+/* result */
+.score{font-family:var(--serif);font-weight:900;font-size:60px;color:var(--purple-d);line-height:1}
+.rw{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:14px 0}
+.rw div{background:var(--cream);border:2px solid var(--beige-d);border-radius:14px;padding:10px;text-align:center}
+.rw b{display:block;font-size:22px;font-family:var(--serif)}
+.banner{background:linear-gradient(90deg,#fff3cf,#f3e8ff);border:2px solid var(--gold);border-radius:14px;padding:10px 14px;font-weight:700;margin-bottom:8px}
+.wl{display:grid;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+.wl li{display:flex;justify-content:space-between;gap:10px;background:var(--cream);border-radius:10px;padding:6px 12px}
+/* spirits */
+.spirit{display:block;width:100%;height:auto;overflow:visible}
+.sil{position:relative}.sil svg{filter:brightness(0) opacity(.28)}
+.sil::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font:900 44px var(--serif);color:var(--brown-l)}
+.ranch{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:18px;align-items:center}
+.stage-bg{border-radius:18px;padding:10px;background:radial-gradient(circle at 50% 70%,var(--sbg,#f3e8ff),transparent 70%),var(--cream);border:2px solid var(--beige-d)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:2px solid var(--beige-d);background:var(--paper);border-radius:99px;padding:5px 14px;font-weight:700;display:flex;gap:6px;align-items:center}
+.chip[aria-pressed=true]{border-color:var(--purple);background:var(--purple-l);color:var(--purple-d)}
+.chip.lock{opacity:.65}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--brown)}
+.stages{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stages div{text-align:center;font-size:12px;border:2px solid var(--beige-d);border-radius:12px;padding:4px;background:var(--cream)}
+.stages div.on{border-color:var(--purple);background:var(--purple-l)}.stages div.off svg{filter:brightness(0) opacity(.25)}
+.pill{display:inline-block;border-radius:99px;padding:1px 10px;font-size:12px;font-weight:700;border:2px solid currentColor}
+.elrow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.elrow div{text-align:center;border-radius:14px;padding:8px 2px;border:2px solid var(--beige-d);background:var(--paper)}
+.elrow b{font-family:var(--serif);font-size:20px;display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pcard{border:2px solid var(--beige-d);background:var(--paper);border-radius:16px;padding:10px;text-align:center;box-shadow:var(--shadow)}
+.pcard:hover{border-color:var(--purple)}
+.pcard .nm{font-family:var(--serif);font-weight:900;font-size:16px}
+.pcard.locked{background:#f4ecda}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(60,40,30,.5);display:grid;place-items:center;padding:16px;z-index:50}
+.modal .card{max-width:520px;width:100%;max-height:90vh;overflow:auto}
+.x{position:absolute;right:10px;top:10px;border:0;background:var(--beige);border-radius:50%;width:32px;height:32px;font-weight:900}
+/* misc */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.badge{display:flex;gap:10px;align-items:center;border:2px solid var(--beige-d);border-radius:14px;padding:10px;background:var(--paper)}
+.badge.off{opacity:.5;filter:grayscale(1)}
+.medal{flex:none;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,var(--gold) 55%,var(--gold-d));border:2px solid var(--gold-d);display:grid;place-items:center;font-weight:900}
+.areas{display:grid;gap:8px}
+.area{display:flex;justify-content:space-between;gap:10px;border-radius:12px;padding:10px 14px;border:2px solid var(--beige-d);background:var(--paper)}
+.area.off{background:#f4ecda;color:var(--brown-l)}
+table.st{width:100%;border-collapse:collapse}table.st td,table.st th{padding:6px 8px;border-bottom:1px solid var(--beige);text-align:left}
+.side{display:grid;gap:12px;align-content:start}
+.side .card{padding:14px}.side b.big{font-family:var(--serif);font-size:22px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--brown);color:#fff;padding:10px 18px;border-radius:99px;font-weight:700;z-index:60;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+.pop{animation:pop .5s}@keyframes pop{40%{transform:scale(1.08)}}
+@media (max-width:1000px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "view" "aside"}
+  #nav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--paper);border-top:2px solid var(--beige-d);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  .nav{flex-direction:row;justify-content:space-around;gap:0;position:static}
+  .nav button{flex-direction:column;gap:2px;padding:4px 2px;font-size:10px;white-space:nowrap;flex:1;min-width:0;justify-content:center;align-items:center;text-align:center}
+  .app{padding-bottom:76px}
+  .lvl{max-width:none}
+}
+/* 精靈猜猜看 */
+.fstage{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:16px;align-items:center;margin:12px 0}
+.fpet{position:relative}.fpet.happy{animation:hop .5s}.fpet.sad{animation:shake .4s}
+@keyframes hop{30%{transform:translateY(-16px) scale(1.05)}}
+.bubble{position:relative;background:#fff;border:2px solid var(--beige-d);border-radius:20px;padding:16px 18px;text-align:center;box-shadow:var(--shadow)}
+.bubble::before{content:"";position:absolute;left:-11px;top:50%;width:18px;height:18px;background:#fff;border-left:2px solid var(--beige-d);border-bottom:2px solid var(--beige-d);transform:translateY(-50%) rotate(45deg)}
+.bubble.ok{border-color:var(--good);background:#e3f5e1}.bubble.no{border-color:var(--bad);background:#fde5e1}
+.bubble.ok::before{background:#e3f5e1;border-color:var(--good)}.bubble.no::before{background:#fde5e1;border-color:var(--bad)}
+.bubble .w{font-size:clamp(34px,8vw,54px);font-weight:900;line-height:1.2;overflow-wrap:anywhere}
+.bubble .r{color:var(--brown-l);min-height:22px}
+.bubble .eq{font-size:22px;margin-top:6px}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.yn .btn{padding:16px;font-size:20px}
+.btn.no{background:linear-gradient(#e87a6c,var(--bad));border-color:#a23d30;box-shadow:0 4px 0 #a23d30}
+.btn.yes{background:linear-gradient(#78c283,var(--good));border-color:#357a40;box-shadow:0 4px 0 #357a40}
+.hrt{color:#d5c7ad;font-size:22px}.hrt.on{color:var(--bad)}
+.plus{position:absolute;left:50%;top:0;font:900 26px var(--serif);color:var(--gold-d);animation:rise .9s forwards;pointer-events:none}
+@keyframes rise{to{transform:translateY(-46px);opacity:0}}
+@media (max-width:600px){
+  .fstage{grid-template-columns:1fr}.fpet{max-width:150px;margin:0 auto}.bubble::before{left:50%;top:-11px;transform:translateX(-50%) rotate(135deg)}
+  .seg button{padding:5px 9px;font-size:13px}
+  .choices{grid-template-columns:1fr}
+  .ranch{grid-template-columns:1fr}
+  .stage-bg{max-width:240px;margin:0 auto}
+  .elrow{grid-template-columns:repeat(3,1fr)}
+  .hero{min-height:320px}.hero .pet{width:170px;bottom:70px}
+  .score{font-size:48px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<body>
+<div class="app">
+  <div id="topbar"></div>
+  <div id="nav"></div>
+  <main id="view"></main>
+  <aside id="aside"></aside>
+</div>
+<div id="modal"></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+/* ---------- 單字資料 ----------
+   新增單字：在 RAW.<語言>.push(...) 或 RAW.<語言> 陣列最後加一筆 [單字, 拼音, 中文意思, 分類]（日文第 5 欄為漢字）。
+   新分類：先在 CATS 加一個 key，每個分類至少 4 個單字（需要湊出四個選項）。
+   新語言：在 RAW、LANG、LANGS 各加一項。請只在陣列「尾端」追加，否則會打亂既有玩家的熟悉度紀錄（以順序編號）。
+   新增精靈：在 SPIRITS 加一筆（k 代號、el 元素、price 金幣價格或 cond 解鎖條件、names 三階段名稱）。
+   第二系列風格用 style:'b' 加 pal 配色，圖形在 spiritB()；第一系列風格在 spiritA()。 */
+const CATS={food:'食物與飲料',nature:'自然與天空',item:'日常用品',color:'顏色',num:'數字與數量',family:'家人與人物',body:'身體部位',place:'地點',animal:'動物',verb:'動詞',adj:'形容詞',time:'時間與日期',clothes:'衣物與配件',house:'居家用品',transport:'交通',school:'學校與學習',job:'職業',feel:'感受與天氣'};
+const RAW={
+ko:[
+['물','mul','水','food'],['밥','bap','飯','food'],['우유','uyu','牛奶','food'],['빵','ppang','麵包','food'],['사과','sagwa','蘋果','food'],['차','cha','茶','food'],['고기','gogi','肉','food'],['계란','gyeran','雞蛋','food'],
+['개','gae','狗','nature'],['고양이','goyangi','貓','nature'],['새','sae','鳥','nature'],['물고기','mulgogi','魚','nature'],['나무','namu','樹','nature'],['꽃','kkot','花','nature'],['산','san','山','nature'],['바다','bada','海','nature'],
+['책','chaek','書','item'],['가방','gabang','包包','item'],['의자','uija','椅子','item'],['문','mun','門','item'],['우산','usan','雨傘','item'],['시계','sigye','時鐘','item'],['모자','moja','帽子','item'],['신발','sinbal','鞋子','item'],
+['빨강','ppalgang','紅色','color'],['파랑','parang','藍色','color'],['노랑','norang','黃色','color'],['초록','chorok','綠色','color'],['하양','hayang','白色','color'],['검정','geomjeong','黑色','color'],['보라','bora','紫色','color'],['분홍','bunhong','粉紅色','color'],
+['하나','hana','一','num'],['둘','dul','二','num'],['셋','set','三','num'],['넷','net','四','num'],['다섯','daseot','五','num'],['여섯','yeoseot','六','num'],['일곱','ilgop','七','num'],['열','yeol','十','num']],
+vi:[
+['nước','','水','food'],['cơm','','飯','food'],['sữa','','牛奶','food'],['bánh mì','','麵包','food'],['táo','','蘋果','food'],['trà','','茶','food'],['thịt','','肉','food'],['trứng','','雞蛋','food'],
+['chó','','狗','nature'],['mèo','','貓','nature'],['chim','','鳥','nature'],['cá','','魚','nature'],['cây','','樹','nature'],['hoa','','花','nature'],['núi','','山','nature'],['biển','','海','nature'],
+['sách','','書','item'],['túi','','包包','item'],['ghế','','椅子','item'],['cửa','','門','item'],['ô','','雨傘','item'],['đồng hồ','','時鐘','item'],['mũ','','帽子','item'],['giày','','鞋子','item'],
+['đỏ','','紅色','color'],['xanh dương','','藍色','color'],['vàng','','黃色','color'],['xanh lá','','綠色','color'],['trắng','','白色','color'],['đen','','黑色','color'],['tím','','紫色','color'],['hồng','','粉紅色','color'],
+['một','','一','num'],['hai','','二','num'],['ba','','三','num'],['bốn','','四','num'],['năm','','五','num'],['sáu','','六','num'],['bảy','','七','num'],['mười','','十','num']]
+};
+
+RAW.ko.push(
+['커피','keopi','咖啡','food'],['과일','gwail','水果','food'],['해','hae','太陽','nature'],['달','dal','月亮','nature'],
+['휴대폰','hyudaepon','手機','item'],['책상','chaeksang','桌子','item'],['주황','juhwang','橘色','color'],['회색','hoesaek','灰色','color'],
+['여덟','yeodeol','八','num'],['아홉','ahop','九','num'],
+['엄마','eomma','媽媽','family'],['아빠','appa','爸爸','family'],['친구','chingu','朋友','family'],['선생님','seonsaengnim','老師','family'],['학생','haksaeng','學生','family'],['아이','ai','孩子','family'],['할머니','halmeoni','奶奶','family'],['할아버지','harabeoji','爺爺','family'],['사람','saram','人','family'],['가족','gajok','家人','family'],
+['머리','meori','頭','body'],['눈','nun','眼睛','body'],['코','ko','鼻子','body'],['입','ip','嘴巴','body'],['귀','gwi','耳朵','body'],['손','son','手','body'],['발','bal','腳','body'],['다리','dari','腿','body'],['얼굴','eolgul','臉','body'],['배','bae','肚子','body'],
+['학교','hakgyo','學校','place'],['집','jip','家','place'],['병원','byeongwon','醫院','place'],['식당','sikdang','餐廳','place'],['버스','beoseu','公車','place'],['지하철','jihacheol','地鐵','place'],['공항','gonghang','機場','place'],['가게','gage','商店','place'],['은행','eunhaeng','銀行','place'],['공원','gongwon','公園','place']);
+RAW.vi.push(
+['cà phê','','咖啡','food'],['trái cây','','水果','food'],['mặt trời','','太陽','nature'],['mặt trăng','','月亮','nature'],
+['điện thoại','','手機','item'],['bàn','','桌子','item'],['cam','','橘色','color'],['xám','','灰色','color'],
+['tám','','八','num'],['chín','','九','num'],
+['mẹ','','媽媽','family'],['bố','','爸爸','family'],['bạn','','朋友','family'],['giáo viên','','老師','family'],['học sinh','','學生','family'],['em bé','','嬰兒','family'],['bà','','奶奶／外婆','family'],['ông','','爺爺／外公','family'],['người','','人','family'],['gia đình','','家人','family'],
+['đầu','','頭','body'],['mắt','','眼睛','body'],['mũi','','鼻子','body'],['miệng','','嘴巴','body'],['tai','','耳朵','body'],['tay','','手','body'],['chân','','腳','body'],['mặt','','臉','body'],['bụng','','肚子','body'],['răng','','牙齒','body'],
+['trường học','','學校','place'],['nhà','','家','place'],['bệnh viện','','醫院','place'],['nhà hàng','','餐廳','place'],['xe buýt','','公車','place'],['sân bay','','機場','place'],['cửa hàng','','商店','place'],['ngân hàng','','銀行','place'],['công viên','','公園','place'],['chợ','','市場','place']);
+/* 日文：單字欄為假名，漢字放在第 5 欄（作答後才顯示），避免與中文字相同而失去練習意義 */
+RAW.ja=[
+['みず','mizu','水','food','水'],['ごはん','gohan','飯','food','ご飯'],['ぎゅうにゅう','gyuunyuu','牛奶','food','牛乳'],['パン','pan','麵包','food'],['りんご','ringo','蘋果','food'],['おちゃ','ocha','茶','food','お茶'],['にく','niku','肉','food','肉'],['たまご','tamago','雞蛋','food','卵'],['コーヒー','koohii','咖啡','food'],['くだもの','kudamono','水果','food','果物'],
+['いぬ','inu','狗','nature','犬'],['ねこ','neko','貓','nature','猫'],['とり','tori','鳥','nature','鳥'],['さかな','sakana','魚','nature','魚'],['き','ki','樹','nature','木'],['はな','hana','花','nature','花'],['やま','yama','山','nature','山'],['うみ','umi','海','nature','海'],['たいよう','taiyou','太陽','nature','太陽'],['つき','tsuki','月亮','nature','月'],
+['ほん','hon','書','item','本'],['かばん','kaban','包包','item','鞄'],['いす','isu','椅子','item','椅子'],['ドア','doa','門','item'],['かさ','kasa','雨傘','item','傘'],['とけい','tokei','時鐘','item','時計'],['ぼうし','boushi','帽子','item','帽子'],['くつ','kutsu','鞋子','item','靴'],['でんわ','denwa','電話','item','電話'],['つくえ','tsukue','桌子','item','机'],
+['あか','aka','紅色','color','赤'],['あお','ao','藍色','color','青'],['きいろ','kiiro','黃色','color','黄色'],['みどり','midori','綠色','color','緑'],['しろ','shiro','白色','color','白'],['くろ','kuro','黑色','color','黒'],['むらさき','murasaki','紫色','color','紫'],['ピンク','pinku','粉紅色','color'],['オレンジ','orenji','橘色','color'],['ちゃいろ','chairo','棕色','color','茶色'],
+['いち','ichi','一','num','一'],['に','ni','二','num','二'],['さん','san','三','num','三'],['よん','yon','四','num','四'],['ご','go','五','num','五'],['ろく','roku','六','num','六'],['なな','nana','七','num','七'],['はち','hachi','八','num','八'],['きゅう','kyuu','九','num','九'],['じゅう','juu','十','num','十'],
+['おかあさん','okaasan','媽媽','family','お母さん'],['おとうさん','otousan','爸爸','family','お父さん'],['ともだち','tomodachi','朋友','family','友達'],['せんせい','sensei','老師','family','先生'],['がくせい','gakusei','學生','family','学生'],['こども','kodomo','孩子','family','子供'],['おばあさん','obaasan','奶奶／外婆','family'],['おじいさん','ojiisan','爺爺／外公','family'],['ひと','hito','人','family','人'],['かぞく','kazoku','家人','family','家族'],
+['あたま','atama','頭','body','頭'],['め','me','眼睛','body','目'],['はな','hana','鼻子','body','鼻'],['くち','kuchi','嘴巴','body','口'],['みみ','mimi','耳朵','body','耳'],['て','te','手','body','手'],['あし','ashi','腳','body','足'],['かお','kao','臉','body','顔'],['おなか','onaka','肚子','body','お腹'],['は','ha','牙齒','body','歯'],
+['がっこう','gakkou','學校','place','学校'],['いえ','ie','家','place','家'],['びょういん','byouin','醫院','place','病院'],['えき','eki','車站','place','駅'],['ぎんこう','ginkou','銀行','place','銀行'],['みせ','mise','商店','place','店'],['こうえん','kouen','公園','place','公園'],['くうこう','kuukou','機場','place','空港'],['バス','basu','公車','place'],['レストラン','resutoran','餐廳','place']];
+RAW.en=[
+['water','','水','food'],['rice','','飯','food'],['milk','','牛奶','food'],['bread','','麵包','food'],['apple','','蘋果','food'],['tea','','茶','food'],['meat','','肉','food'],['egg','','雞蛋','food'],['coffee','','咖啡','food'],['fruit','','水果','food'],
+['dog','','狗','nature'],['cat','','貓','nature'],['bird','','鳥','nature'],['fish','','魚','nature'],['tree','','樹','nature'],['flower','','花','nature'],['mountain','','山','nature'],['sea','','海','nature'],['sun','','太陽','nature'],['moon','','月亮','nature'],
+['book','','書','item'],['bag','','包包','item'],['chair','','椅子','item'],['door','','門','item'],['umbrella','','雨傘','item'],['clock','','時鐘','item'],['hat','','帽子','item'],['shoes','','鞋子','item'],['phone','','手機','item'],['desk','','桌子','item'],
+['red','','紅色','color'],['blue','','藍色','color'],['yellow','','黃色','color'],['green','','綠色','color'],['white','','白色','color'],['black','','黑色','color'],['purple','','紫色','color'],['pink','','粉紅色','color'],['orange','','橘色','color'],['brown','','棕色','color'],
+['one','','一','num'],['two','','二','num'],['three','','三','num'],['four','','四','num'],['five','','五','num'],['six','','六','num'],['seven','','七','num'],['eight','','八','num'],['nine','','九','num'],['ten','','十','num'],
+['mother','','媽媽','family'],['father','','爸爸','family'],['friend','','朋友','family'],['teacher','','老師','family'],['student','','學生','family'],['child','','孩子','family'],['grandmother','','奶奶／外婆','family'],['grandfather','','爺爺／外公','family'],['person','','人','family'],['family','','家人','family'],
+['head','','頭','body'],['eye','','眼睛','body'],['nose','','鼻子','body'],['mouth','','嘴巴','body'],['ear','','耳朵','body'],['hand','','手','body'],['foot','','腳','body'],['face','','臉','body'],['stomach','','肚子','body'],['tooth','','牙齒','body'],
+['school','','學校','place'],['home','','家','place'],['hospital','','醫院','place'],['restaurant','','餐廳','place'],['bus','','公車','place'],['airport','','機場','place'],['shop','','商店','place'],['bank','','銀行','place'],['park','','公園','place'],['station','','車站','place']];
+/* 擴充單字：每種語言 +220 字，合計 300 字（同一列四個語言對應同一個中文意思）*/
+RAW.ko.push(
+['면','myeon','麵','food'],['국','guk','湯','food'],['케이크','keikeu','蛋糕','food'],['주스','juseu','果汁','food'],
+['소금','sogeum','鹽','food'],['강','gang','河','nature'],['비','bi','雨','nature'],['바람','baram','風','nature'],
+['구름','gureum','雲','nature'],['별','byeol','星星','nature'],['펜','pen','筆','item'],['컵','keop','杯子','item'],
+['침대','chimdae','床','item'],['열쇠','yeolsoe','鑰匙','item'],['안경','angyeong','眼鏡','item'],['금색','geumsaek','金色','color'],
+['은색','eunsaek','銀色','color'],['무지개','mujigae','彩虹','color'],['투명','tumyeong','透明','color'],['영','yeong','零','num'],
+['이십','isip','二十','num'],['백','baek','一百','num'],['천','cheon','一千','num'],['만','man','一萬','num'],
+['반','ban','一半','num'],['남자','namja','男人','family'],['여자','yeoja','女人','family'],['소년','sonyeon','男孩','family'],
+['소녀','sonyeo','女孩','family'],['이웃','iut','鄰居','family'],['머리카락','meorikarak','頭髮','body'],['손가락','songarak','手指','body'],
+['어깨','eokkae','肩膀','body'],['등','deung','背部','body'],['목','mok','脖子','body'],['도서관','doseogwan','圖書館','place'],
+['우체국','ucheguk','郵局','place'],['슈퍼마켓','syupeomaket','超市','place'],['영화관','yeonghwagwan','電影院','place'],['호텔','hotel','飯店','place'],
+['말','mal','馬','animal'],['소','so','牛','animal'],['돼지','dwaeji','豬','animal'],['양','yang','羊','animal'],
+['닭','dak','雞','animal'],['오리','ori','鴨','animal'],['토끼','tokki','兔子','animal'],['호랑이','horangi','老虎','animal'],
+['코끼리','kkokkiri','大象','animal'],['원숭이','wonsungi','猴子','animal'],['곰','gom','熊','animal'],['뱀','baem','蛇','animal'],
+['개구리','gaeguri','青蛙','animal'],['나비','nabi','蝴蝶','animal'],['벌','beol','蜜蜂','animal'],['쥐','jwi','老鼠','animal'],
+['사자','saja','獅子','animal'],['거북이','geobugi','烏龜','animal'],['먹다','meokda','吃','verb'],['마시다','masida','喝','verb'],
+['보다','boda','看','verb'],['듣다','deutda','聽','verb'],['말하다','malhada','說','verb'],['걷다','geotda','走','verb'],
+['달리다','dallida','跑','verb'],['자다','jada','睡','verb'],['읽다','ikda','讀','verb'],['쓰다','sseuda','寫','verb'],
+['사다','sada','買','verb'],['팔다','palda','賣','verb'],['오다','oda','來','verb'],['가다','gada','去','verb'],
+['주다','juda','給','verb'],['좋아하다','joahada','喜歡','verb'],['공부하다','gongbuhada','學習','verb'],['일하다','ilhada','工作','verb'],
+['크다','keuda','大','adj'],['작다','jakda','小','adj'],['길다','gilda','長','adj'],['짧다','jjalda','短','adj'],
+['새롭다','saeropda','新','adj'],['오래되다','oraedoeda','舊','adj'],['좋다','jota','好','adj'],['나쁘다','nappeuda','壞','adj'],
+['덥다','deopda','熱','adj'],['춥다','chupda','冷','adj'],['빠르다','ppareuda','快','adj'],['느리다','neurida','慢','adj'],
+['비싸다','bissada','貴','adj'],['싸다','ssada','便宜','adj'],['많다','manta','多','adj'],['적다','jeokda','少','adj'],
+['멀다','meolda','遠','adj'],['가깝다','gakkapda','近','adj'],['오늘','oneul','今天','time'],['내일','naeil','明天','time'],
+['어제','eoje','昨天','time'],['지금','jigeum','現在','time'],['아침','achim','早上','time'],['저녁','jeonyeok','晚上','time'],
+['월요일','woryoil','星期一','time'],['화요일','hwayoil','星期二','time'],['수요일','suyoil','星期三','time'],['목요일','mogyoil','星期四','time'],
+['금요일','geumyoil','星期五','time'],['토요일','toyoil','星期六','time'],['일요일','iryoil','星期日','time'],['주말','jumal','週末','time'],
+['생일','saengil','生日','time'],['시간','sigan','小時','time'],['분','bun','分鐘','time'],['매일','maeil','每天','time'],
+['옷','ot','衣服','clothes'],['바지','baji','褲子','clothes'],['치마','chima','裙子','clothes'],['외투','oetu','外套','clothes'],
+['셔츠','syeocheu','襯衫','clothes'],['양말','yangmal','襪子','clothes'],['장갑','janggap','手套','clothes'],['목도리','mokdori','圍巾','clothes'],
+['넥타이','nektai','領帶','clothes'],['벨트','belteu','皮帶','clothes'],['반지','banji','戒指','clothes'],['목걸이','mokgeori','項鍊','clothes'],
+['지갑','jigap','錢包','clothes'],['마스크','maseukeu','口罩','clothes'],['슬리퍼','seullipeo','拖鞋','clothes'],['잠옷','jamot','睡衣','clothes'],
+['선글라스','seongeullaseu','太陽眼鏡','clothes'],['원피스','wonpiseu','洋裝','clothes'],['부엌','bueok','廚房','house'],['욕실','yoksil','浴室','house'],
+['침실','chimsil','臥室','house'],['거실','geosil','客廳','house'],['창문','changmun','窗戶','house'],['계단','gyedan','樓梯','house'],
+['텔레비전','tellebijeon','電視','house'],['냉장고','naengjanggo','冰箱','house'],['컴퓨터','keompyuteo','電腦','house'],['전등','jeondeung','燈','house'],
+['거울','geoul','鏡子','house'],['소파','sopa','沙發','house'],['수건','sugeon','毛巾','house'],['칫솔','chitsol','牙刷','house'],
+['그릇','geureut','碗','house'],['접시','jeopsi','盤子','house'],['젓가락','jeotgarak','筷子','house'],['숟가락','sutgarak','湯匙','house'],
+['자동차','jadongcha','汽車','transport'],['기차','gicha','火車','transport'],['비행기','bihaenggi','飛機','transport'],['보트','boteu','船','transport'],
+['자전거','jajeongeo','腳踏車','transport'],['오토바이','otobai','機車','transport'],['택시','taeksi','計程車','transport'],['도로','doro','道路','transport'],
+['주유소','juyuso','加油站','transport'],['신호등','sinhodeung','紅綠燈','transport'],['표','pyo','車票','transport'],['여권','yeogwon','護照','transport'],
+['캐리어','kaerieo','行李箱','transport'],['지도','jido','地圖','transport'],['운전사','unjeonsa','司機','transport'],['왼쪽','oenjjok','左邊','transport'],
+['오른쪽','oreunjjok','右邊','transport'],['주차장','juchajang','停車場','transport'],['교실','gyosil','教室','school'],['숙제','sukje','作業','school'],
+['시험','siheom','考試','school'],['사전','sajeon','字典','school'],['공책','gongchaek','筆記本','school'],['연필','yeonpil','鉛筆','school'],
+['지우개','jiugae','橡皮擦','school'],['칠판','chilpan','黑板','school'],['교과서','gyogwaseo','課本','school'],['자','ja','尺','school'],
+['가위','gawi','剪刀','school'],['질문','jilmun','問題','school'],['답','dap','答案','school'],['단어','daneo','單字','school'],
+['문장','munjang','句子','school'],['이야기','iyagi','故事','school'],['노래','norae','歌曲','school'],['일기','ilgi','日記','school'],
+['의사','uisa','醫生','job'],['간호사','ganhosa','護士','job'],['경찰','gyeongchal','警察','job'],['요리사','yorisa','廚師','job'],
+['엔지니어','enjinieo','工程師','job'],['농부','nongbu','農夫','job'],['가수','gasu','歌手','job'],['변호사','byeonhosa','律師','job'],
+['사장','sajang','老闆','job'],['화가','hwaga','畫家','job'],['작가','jakga','作家','job'],['배우','baeu','演員','job'],
+['소방관','sobanggwan','消防員','job'],['점원','jeomwon','店員','job'],['조종사','jojongsa','飛行員','job'],['과학자','gwahakja','科學家','job'],
+['운동선수','undongseonsu','運動員','job'],['회사원','hoesawon','上班族','job'],['행복하다','haengbokhada','開心','feel'],['슬프다','seulpeuda','難過','feel'],
+['화나다','hwanada','生氣','feel'],['무섭다','museopda','害怕','feel'],['피곤하다','pigonhada','累','feel'],['배고프다','baegopeuda','餓','feel'],
+['목마르다','mongmareuda','渴','feel'],['사랑','sarang','愛','feel'],['날씨','nalssi','天氣','feel'],['맑다','makda','晴天','feel'],
+['봄','bom','春天','feel'],['여름','yeoreum','夏天','feel'],['가을','gaeul','秋天','feel'],['겨울','gyeoul','冬天','feel'],
+['따뜻하다','ttatteuthada','溫暖','feel'],['시원하다','siwonhada','涼爽','feel'],['태풍','taepung','颱風','feel'],['지진','jijin','地震','feel']);
+RAW.vi.push(
+['mì','','麵','food'],['canh','','湯','food'],['bánh kem','','蛋糕','food'],['nước ép','','果汁','food'],
+['muối','','鹽','food'],['sông','','河','nature'],['mưa','','雨','nature'],['gió','','風','nature'],
+['mây','','雲','nature'],['sao','','星星','nature'],['bút','','筆','item'],['cốc','','杯子','item'],
+['giường','','床','item'],['chìa khóa','','鑰匙','item'],['kính','','眼鏡','item'],['màu vàng kim','','金色','color'],
+['màu bạc','','銀色','color'],['cầu vồng','','彩虹','color'],['trong suốt','','透明','color'],['không','','零','num'],
+['hai mươi','','二十','num'],['một trăm','','一百','num'],['một nghìn','','一千','num'],['mười nghìn','','一萬','num'],
+['một nửa','','一半','num'],['đàn ông','','男人','family'],['phụ nữ','','女人','family'],['bé trai','','男孩','family'],
+['bé gái','','女孩','family'],['hàng xóm','','鄰居','family'],['tóc','','頭髮','body'],['ngón tay','','手指','body'],
+['vai','','肩膀','body'],['lưng','','背部','body'],['cổ','','脖子','body'],['thư viện','','圖書館','place'],
+['bưu điện','','郵局','place'],['siêu thị','','超市','place'],['rạp chiếu phim','','電影院','place'],['khách sạn','','飯店','place'],
+['ngựa','','馬','animal'],['bò','','牛','animal'],['lợn','','豬','animal'],['cừu','','羊','animal'],
+['gà','','雞','animal'],['vịt','','鴨','animal'],['thỏ','','兔子','animal'],['hổ','','老虎','animal'],
+['voi','','大象','animal'],['khỉ','','猴子','animal'],['gấu','','熊','animal'],['rắn','','蛇','animal'],
+['ếch','','青蛙','animal'],['bướm','','蝴蝶','animal'],['ong','','蜜蜂','animal'],['chuột','','老鼠','animal'],
+['sư tử','','獅子','animal'],['rùa','','烏龜','animal'],['ăn','','吃','verb'],['uống','','喝','verb'],
+['xem','','看','verb'],['nghe','','聽','verb'],['nói','','說','verb'],['đi bộ','','走','verb'],
+['chạy','','跑','verb'],['ngủ','','睡','verb'],['đọc','','讀','verb'],['viết','','寫','verb'],
+['mua','','買','verb'],['bán','','賣','verb'],['đến','','來','verb'],['đi','','去','verb'],
+['cho','','給','verb'],['thích','','喜歡','verb'],['học','','學習','verb'],['làm việc','','工作','verb'],
+['lớn','','大','adj'],['nhỏ','','小','adj'],['dài','','長','adj'],['ngắn','','短','adj'],
+['mới','','新','adj'],['cũ','','舊','adj'],['tốt','','好','adj'],['xấu','','壞','adj'],
+['nóng','','熱','adj'],['lạnh','','冷','adj'],['nhanh','','快','adj'],['chậm','','慢','adj'],
+['đắt','','貴','adj'],['rẻ','','便宜','adj'],['nhiều','','多','adj'],['ít','','少','adj'],
+['xa','','遠','adj'],['gần','','近','adj'],['hôm nay','','今天','time'],['ngày mai','','明天','time'],
+['hôm qua','','昨天','time'],['bây giờ','','現在','time'],['buổi sáng','','早上','time'],['buổi tối','','晚上','time'],
+['thứ hai','','星期一','time'],['thứ ba','','星期二','time'],['thứ tư','','星期三','time'],['thứ năm','','星期四','time'],
+['thứ sáu','','星期五','time'],['thứ bảy','','星期六','time'],['chủ nhật','','星期日','time'],['cuối tuần','','週末','time'],
+['sinh nhật','','生日','time'],['giờ','','小時','time'],['phút','','分鐘','time'],['mỗi ngày','','每天','time'],
+['quần áo','','衣服','clothes'],['quần','','褲子','clothes'],['váy','','裙子','clothes'],['áo khoác','','外套','clothes'],
+['áo sơ mi','','襯衫','clothes'],['tất','','襪子','clothes'],['găng tay','','手套','clothes'],['khăn quàng','','圍巾','clothes'],
+['cà vạt','','領帶','clothes'],['thắt lưng','','皮帶','clothes'],['nhẫn','','戒指','clothes'],['dây chuyền','','項鍊','clothes'],
+['ví','','錢包','clothes'],['khẩu trang','','口罩','clothes'],['dép','','拖鞋','clothes'],['đồ ngủ','','睡衣','clothes'],
+['kính râm','','太陽眼鏡','clothes'],['đầm','','洋裝','clothes'],['bếp','','廚房','house'],['phòng tắm','','浴室','house'],
+['phòng ngủ','','臥室','house'],['phòng khách','','客廳','house'],['cửa sổ','','窗戶','house'],['cầu thang','','樓梯','house'],
+['ti vi','','電視','house'],['tủ lạnh','','冰箱','house'],['máy tính','','電腦','house'],['đèn','','燈','house'],
+['gương','','鏡子','house'],['ghế sofa','','沙發','house'],['khăn tắm','','毛巾','house'],['bàn chải đánh răng','','牙刷','house'],
+['bát','','碗','house'],['đĩa','','盤子','house'],['đũa','','筷子','house'],['thìa','','湯匙','house'],
+['ô tô','','汽車','transport'],['tàu hỏa','','火車','transport'],['máy bay','','飛機','transport'],['thuyền','','船','transport'],
+['xe đạp','','腳踏車','transport'],['xe máy','','機車','transport'],['taxi','','計程車','transport'],['đường','','道路','transport'],
+['trạm xăng','','加油站','transport'],['đèn giao thông','','紅綠燈','transport'],['vé','','車票','transport'],['hộ chiếu','','護照','transport'],
+['vali','','行李箱','transport'],['bản đồ','','地圖','transport'],['tài xế','','司機','transport'],['bên trái','','左邊','transport'],
+['bên phải','','右邊','transport'],['bãi đỗ xe','','停車場','transport'],['lớp học','','教室','school'],['bài tập','','作業','school'],
+['kỳ thi','','考試','school'],['từ điển','','字典','school'],['vở','','筆記本','school'],['bút chì','','鉛筆','school'],
+['cục tẩy','','橡皮擦','school'],['bảng đen','','黑板','school'],['sách giáo khoa','','課本','school'],['thước kẻ','','尺','school'],
+['kéo','','剪刀','school'],['câu hỏi','','問題','school'],['câu trả lời','','答案','school'],['từ vựng','','單字','school'],
+['câu','','句子','school'],['câu chuyện','','故事','school'],['bài hát','','歌曲','school'],['nhật ký','','日記','school'],
+['bác sĩ','','醫生','job'],['y tá','','護士','job'],['cảnh sát','','警察','job'],['đầu bếp','','廚師','job'],
+['kỹ sư','','工程師','job'],['nông dân','','農夫','job'],['ca sĩ','','歌手','job'],['luật sư','','律師','job'],
+['ông chủ','','老闆','job'],['họa sĩ','','畫家','job'],['nhà văn','','作家','job'],['diễn viên','','演員','job'],
+['lính cứu hỏa','','消防員','job'],['nhân viên bán hàng','','店員','job'],['phi công','','飛行員','job'],['nhà khoa học','','科學家','job'],
+['vận động viên','','運動員','job'],['nhân viên văn phòng','','上班族','job'],['vui','','開心','feel'],['buồn','','難過','feel'],
+['giận','','生氣','feel'],['sợ','','害怕','feel'],['mệt','','累','feel'],['đói','','餓','feel'],
+['khát','','渴','feel'],['yêu','','愛','feel'],['thời tiết','','天氣','feel'],['trời nắng','','晴天','feel'],
+['mùa xuân','','春天','feel'],['mùa hè','','夏天','feel'],['mùa thu','','秋天','feel'],['mùa đông','','冬天','feel'],
+['ấm áp','','溫暖','feel'],['mát mẻ','','涼爽','feel'],['bão','','颱風','feel'],['động đất','','地震','feel']);
+RAW.ja.push(
+['めん','men','麵','food','麺'],['スープ','suupu','湯','food'],['ケーキ','keeki','蛋糕','food'],['ジュース','juusu','果汁','food'],
+['しお','shio','鹽','food','塩'],['かわ','kawa','河','nature','川'],['あめ','ame','雨','nature','雨'],['かぜ','kaze','風','nature','風'],
+['くも','kumo','雲','nature','雲'],['ほし','hoshi','星星','nature','星'],['ペン','pen','筆','item'],['コップ','koppu','杯子','item'],
+['ベッド','beddo','床','item'],['かぎ','kagi','鑰匙','item','鍵'],['めがね','megane','眼鏡','item','眼鏡'],['きんいろ','kiniro','金色','color','金色'],
+['ぎんいろ','giniro','銀色','color','銀色'],['にじ','niji','彩虹','color','虹'],['とうめい','toumei','透明','color','透明'],['ゼロ','zero','零','num'],
+['にじゅう','nijuu','二十','num','二十'],['ひゃく','hyaku','一百','num','百'],['せん','sen','一千','num','千'],['まん','man','一萬','num','万'],
+['はんぶん','hanbun','一半','num','半分'],['おとこのひと','otoko no hito','男人','family','男の人'],['おんなのひと','onna no hito','女人','family','女の人'],['おとこのこ','otoko no ko','男孩','family','男の子'],
+['おんなのこ','onna no ko','女孩','family','女の子'],['りんじん','rinjin','鄰居','family','隣人'],['かみのけ','kami no ke','頭髮','body','髪の毛'],['ゆび','yubi','手指','body','指'],
+['かた','kata','肩膀','body','肩'],['せなか','senaka','背部','body','背中'],['くび','kubi','脖子','body','首'],['としょかん','toshokan','圖書館','place','図書館'],
+['ゆうびんきょく','yuubinkyoku','郵局','place','郵便局'],['スーパー','suupaa','超市','place'],['えいがかん','eigakan','電影院','place','映画館'],['ホテル','hoteru','飯店','place'],
+['うま','uma','馬','animal','馬'],['うし','ushi','牛','animal','牛'],['ぶた','buta','豬','animal','豚'],['ひつじ','hitsuji','羊','animal','羊'],
+['にわとり','niwatori','雞','animal','鶏'],['あひる','ahiru','鴨','animal','家鴨'],['うさぎ','usagi','兔子','animal','兎'],['とら','tora','老虎','animal','虎'],
+['ぞう','zou','大象','animal','象'],['さる','saru','猴子','animal','猿'],['くま','kuma','熊','animal','熊'],['へび','hebi','蛇','animal','蛇'],
+['かえる','kaeru','青蛙','animal','蛙'],['ちょうちょう','chouchou','蝴蝶','animal'],['はち','hachi','蜜蜂','animal','蜂'],['ねずみ','nezumi','老鼠','animal','鼠'],
+['ライオン','raion','獅子','animal'],['かめ','kame','烏龜','animal','亀'],['たべる','taberu','吃','verb','食べる'],['のむ','nomu','喝','verb','飲む'],
+['みる','miru','看','verb','見る'],['きく','kiku','聽','verb','聞く'],['はなす','hanasu','說','verb','話す'],['あるく','aruku','走','verb','歩く'],
+['はしる','hashiru','跑','verb','走る'],['ねる','neru','睡','verb','寝る'],['よむ','yomu','讀','verb','読む'],['かく','kaku','寫','verb','書く'],
+['かう','kau','買','verb','買う'],['うる','uru','賣','verb','売る'],['くる','kuru','來','verb','来る'],['いく','iku','去','verb','行く'],
+['あげる','ageru','給','verb'],['すき','suki','喜歡','verb','好き'],['べんきょうする','benkyou suru','學習','verb','勉強する'],['はたらく','hataraku','工作','verb','働く'],
+['おおきい','ookii','大','adj','大きい'],['ちいさい','chiisai','小','adj','小さい'],['ながい','nagai','長','adj','長い'],['みじかい','mijikai','短','adj','短い'],
+['あたらしい','atarashii','新','adj','新しい'],['ふるい','furui','舊','adj','古い'],['いい','ii','好','adj','良い'],['わるい','warui','壞','adj','悪い'],
+['あつい','atsui','熱','adj','暑い'],['さむい','samui','冷','adj','寒い'],['はやい','hayai','快','adj','速い'],['おそい','osoi','慢','adj','遅い'],
+['たかい','takai','貴','adj','高い'],['やすい','yasui','便宜','adj','安い'],['おおい','ooi','多','adj','多い'],['すくない','sukunai','少','adj','少ない'],
+['とおい','tooi','遠','adj','遠い'],['ちかい','chikai','近','adj','近い'],['きょう','kyou','今天','time','今日'],['あした','ashita','明天','time','明日'],
+['きのう','kinou','昨天','time','昨日'],['いま','ima','現在','time','今'],['あさ','asa','早上','time','朝'],['よる','yoru','晚上','time','夜'],
+['げつようび','getsuyoubi','星期一','time','月曜日'],['かようび','kayoubi','星期二','time','火曜日'],['すいようび','suiyoubi','星期三','time','水曜日'],['もくようび','mokuyoubi','星期四','time','木曜日'],
+['きんようび','kinyoubi','星期五','time','金曜日'],['どようび','doyoubi','星期六','time','土曜日'],['にちようび','nichiyoubi','星期日','time','日曜日'],['しゅうまつ','shuumatsu','週末','time','週末'],
+['たんじょうび','tanjoubi','生日','time','誕生日'],['じかん','jikan','小時','time','時間'],['ふん','fun','分鐘','time','分'],['まいにち','mainichi','每天','time','毎日'],
+['ふく','fuku','衣服','clothes','服'],['ズボン','zubon','褲子','clothes'],['スカート','sukaato','裙子','clothes'],['コート','kooto','外套','clothes'],
+['シャツ','shatsu','襯衫','clothes'],['くつした','kutsushita','襪子','clothes','靴下'],['てぶくろ','tebukuro','手套','clothes','手袋'],['マフラー','mafuraa','圍巾','clothes'],
+['ネクタイ','nekutai','領帶','clothes'],['ベルト','beruto','皮帶','clothes'],['ゆびわ','yubiwa','戒指','clothes','指輪'],['ネックレス','nekkuresu','項鍊','clothes'],
+['さいふ','saifu','錢包','clothes','財布'],['マスク','masuku','口罩','clothes'],['スリッパ','surippa','拖鞋','clothes'],['パジャマ','pajama','睡衣','clothes'],
+['サングラス','sangurasu','太陽眼鏡','clothes'],['ワンピース','wanpiisu','洋裝','clothes'],['だいどころ','daidokoro','廚房','house','台所'],['おふろ','ofuro','浴室','house','お風呂'],
+['しんしつ','shinshitsu','臥室','house','寝室'],['リビング','ribingu','客廳','house'],['まど','mado','窗戶','house','窓'],['かいだん','kaidan','樓梯','house','階段'],
+['テレビ','terebi','電視','house'],['れいぞうこ','reizouko','冰箱','house','冷蔵庫'],['パソコン','pasokon','電腦','house'],['でんき','denki','燈','house','電気'],
+['かがみ','kagami','鏡子','house','鏡'],['ソファ','sofa','沙發','house'],['タオル','taoru','毛巾','house'],['はブラシ','haburashi','牙刷','house','歯ブラシ'],
+['おわん','owan','碗','house','お椀'],['おさら','osara','盤子','house','お皿'],['はし','hashi','筷子','house','箸'],['スプーン','supuun','湯匙','house'],
+['くるま','kuruma','汽車','transport','車'],['でんしゃ','densha','火車','transport','電車'],['ひこうき','hikouki','飛機','transport','飛行機'],['ふね','fune','船','transport','船'],
+['じてんしゃ','jitensha','腳踏車','transport','自転車'],['バイク','baiku','機車','transport'],['タクシー','takushii','計程車','transport'],['みち','michi','道路','transport','道'],
+['ガソリンスタンド','gasorin sutando','加油站','transport'],['しんごう','shingou','紅綠燈','transport','信号'],['きっぷ','kippu','車票','transport','切符'],['パスポート','pasupooto','護照','transport'],
+['スーツケース','suutsukeesu','行李箱','transport'],['ちず','chizu','地圖','transport','地図'],['うんてんしゅ','untenshu','司機','transport','運転手'],['ひだり','hidari','左邊','transport','左'],
+['みぎ','migi','右邊','transport','右'],['ちゅうしゃじょう','chuushajou','停車場','transport','駐車場'],['きょうしつ','kyoushitsu','教室','school','教室'],['しゅくだい','shukudai','作業','school','宿題'],
+['しけん','shiken','考試','school','試験'],['じしょ','jisho','字典','school','辞書'],['ノート','nooto','筆記本','school'],['えんぴつ','enpitsu','鉛筆','school','鉛筆'],
+['けしゴム','keshigomu','橡皮擦','school','消しゴム'],['こくばん','kokuban','黑板','school','黒板'],['きょうかしょ','kyoukasho','課本','school','教科書'],['じょうぎ','jougi','尺','school','定規'],
+['はさみ','hasami','剪刀','school'],['しつもん','shitsumon','問題','school','質問'],['こたえ','kotae','答案','school','答え'],['たんご','tango','單字','school','単語'],
+['ぶん','bun','句子','school','文'],['おはなし','ohanashi','故事','school','お話'],['うた','uta','歌曲','school','歌'],['にっき','nikki','日記','school','日記'],
+['いしゃ','isha','醫生','job','医者'],['かんごし','kangoshi','護士','job','看護師'],['けいさつかん','keisatsukan','警察','job','警察官'],['りょうりにん','ryourinin','廚師','job','料理人'],
+['エンジニア','enjinia','工程師','job'],['のうふ','noufu','農夫','job','農夫'],['かしゅ','kashu','歌手','job','歌手'],['べんごし','bengoshi','律師','job','弁護士'],
+['しゃちょう','shachou','老闆','job','社長'],['がか','gaka','畫家','job','画家'],['さっか','sakka','作家','job','作家'],['はいゆう','haiyuu','演員','job','俳優'],
+['しょうぼうし','shouboushi','消防員','job','消防士'],['てんいん','tenin','店員','job','店員'],['パイロット','pairotto','飛行員','job'],['かがくしゃ','kagakusha','科學家','job','科学者'],
+['うんどうせんしゅ','undou senshu','運動員','job','運動選手'],['かいしゃいん','kaishain','上班族','job','会社員'],['うれしい','ureshii','開心','feel','嬉しい'],['かなしい','kanashii','難過','feel','悲しい'],
+['おこる','okoru','生氣','feel','怒る'],['こわい','kowai','害怕','feel','怖い'],['つかれる','tsukareru','累','feel','疲れる'],['おなかがすく','onaka ga suku','餓','feel','お腹がすく'],
+['のどがかわく','nodo ga kawaku','渴','feel','喉が渇く'],['あい','ai','愛','feel','愛'],['てんき','tenki','天氣','feel','天気'],['はれ','hare','晴天','feel','晴れ'],
+['はる','haru','春天','feel','春'],['なつ','natsu','夏天','feel','夏'],['あき','aki','秋天','feel','秋'],['ふゆ','fuyu','冬天','feel','冬'],
+['あたたかい','atatakai','溫暖','feel','暖かい'],['すずしい','suzushii','涼爽','feel','涼しい'],['たいふう','taifuu','颱風','feel','台風'],['じしん','jishin','地震','feel','地震']);
+RAW.en.push(
+['noodles','','麵','food'],['soup','','湯','food'],['cake','','蛋糕','food'],['juice','','果汁','food'],
+['salt','','鹽','food'],['river','','河','nature'],['rain','','雨','nature'],['wind','','風','nature'],
+['cloud','','雲','nature'],['star','','星星','nature'],['pen','','筆','item'],['cup','','杯子','item'],
+['bed','','床','item'],['key','','鑰匙','item'],['glasses','','眼鏡','item'],['gold','','金色','color'],
+['silver','','銀色','color'],['rainbow','','彩虹','color'],['transparent','','透明','color'],['zero','','零','num'],
+['twenty','','二十','num'],['one hundred','','一百','num'],['one thousand','','一千','num'],['ten thousand','','一萬','num'],
+['half','','一半','num'],['man','','男人','family'],['woman','','女人','family'],['boy','','男孩','family'],
+['girl','','女孩','family'],['neighbor','','鄰居','family'],['hair','','頭髮','body'],['finger','','手指','body'],
+['shoulder','','肩膀','body'],['back','','背部','body'],['neck','','脖子','body'],['library','','圖書館','place'],
+['post office','','郵局','place'],['supermarket','','超市','place'],['cinema','','電影院','place'],['hotel','','飯店','place'],
+['horse','','馬','animal'],['cow','','牛','animal'],['pig','','豬','animal'],['sheep','','羊','animal'],
+['chicken','','雞','animal'],['duck','','鴨','animal'],['rabbit','','兔子','animal'],['tiger','','老虎','animal'],
+['elephant','','大象','animal'],['monkey','','猴子','animal'],['bear','','熊','animal'],['snake','','蛇','animal'],
+['frog','','青蛙','animal'],['butterfly','','蝴蝶','animal'],['bee','','蜜蜂','animal'],['mouse','','老鼠','animal'],
+['lion','','獅子','animal'],['turtle','','烏龜','animal'],['eat','','吃','verb'],['drink','','喝','verb'],
+['watch','','看','verb'],['listen','','聽','verb'],['speak','','說','verb'],['walk','','走','verb'],
+['run','','跑','verb'],['sleep','','睡','verb'],['read','','讀','verb'],['write','','寫','verb'],
+['buy','','買','verb'],['sell','','賣','verb'],['come','','來','verb'],['go','','去','verb'],
+['give','','給','verb'],['like','','喜歡','verb'],['study','','學習','verb'],['work','','工作','verb'],
+['big','','大','adj'],['small','','小','adj'],['long','','長','adj'],['short','','短','adj'],
+['new','','新','adj'],['old','','舊','adj'],['good','','好','adj'],['bad','','壞','adj'],
+['hot','','熱','adj'],['cold','','冷','adj'],['fast','','快','adj'],['slow','','慢','adj'],
+['expensive','','貴','adj'],['cheap','','便宜','adj'],['many','','多','adj'],['few','','少','adj'],
+['far','','遠','adj'],['near','','近','adj'],['today','','今天','time'],['tomorrow','','明天','time'],
+['yesterday','','昨天','time'],['now','','現在','time'],['morning','','早上','time'],['evening','','晚上','time'],
+['Monday','','星期一','time'],['Tuesday','','星期二','time'],['Wednesday','','星期三','time'],['Thursday','','星期四','time'],
+['Friday','','星期五','time'],['Saturday','','星期六','time'],['Sunday','','星期日','time'],['weekend','','週末','time'],
+['birthday','','生日','time'],['hour','','小時','time'],['minute','','分鐘','time'],['every day','','每天','time'],
+['clothes','','衣服','clothes'],['pants','','褲子','clothes'],['skirt','','裙子','clothes'],['coat','','外套','clothes'],
+['shirt','','襯衫','clothes'],['socks','','襪子','clothes'],['gloves','','手套','clothes'],['scarf','','圍巾','clothes'],
+['tie','','領帶','clothes'],['belt','','皮帶','clothes'],['ring','','戒指','clothes'],['necklace','','項鍊','clothes'],
+['wallet','','錢包','clothes'],['mask','','口罩','clothes'],['slippers','','拖鞋','clothes'],['pajamas','','睡衣','clothes'],
+['sunglasses','','太陽眼鏡','clothes'],['dress','','洋裝','clothes'],['kitchen','','廚房','house'],['bathroom','','浴室','house'],
+['bedroom','','臥室','house'],['living room','','客廳','house'],['window','','窗戶','house'],['stairs','','樓梯','house'],
+['TV','','電視','house'],['refrigerator','','冰箱','house'],['computer','','電腦','house'],['lamp','','燈','house'],
+['mirror','','鏡子','house'],['sofa','','沙發','house'],['towel','','毛巾','house'],['toothbrush','','牙刷','house'],
+['bowl','','碗','house'],['plate','','盤子','house'],['chopsticks','','筷子','house'],['spoon','','湯匙','house'],
+['car','','汽車','transport'],['train','','火車','transport'],['airplane','','飛機','transport'],['boat','','船','transport'],
+['bicycle','','腳踏車','transport'],['motorcycle','','機車','transport'],['taxi','','計程車','transport'],['road','','道路','transport'],
+['gas station','','加油站','transport'],['traffic light','','紅綠燈','transport'],['ticket','','車票','transport'],['passport','','護照','transport'],
+['suitcase','','行李箱','transport'],['map','','地圖','transport'],['driver','','司機','transport'],['left','','左邊','transport'],
+['right','','右邊','transport'],['parking lot','','停車場','transport'],['classroom','','教室','school'],['homework','','作業','school'],
+['exam','','考試','school'],['dictionary','','字典','school'],['notebook','','筆記本','school'],['pencil','','鉛筆','school'],
+['eraser','','橡皮擦','school'],['blackboard','','黑板','school'],['textbook','','課本','school'],['ruler','','尺','school'],
+['scissors','','剪刀','school'],['question','','問題','school'],['answer','','答案','school'],['word','','單字','school'],
+['sentence','','句子','school'],['story','','故事','school'],['song','','歌曲','school'],['diary','','日記','school'],
+['doctor','','醫生','job'],['nurse','','護士','job'],['police officer','','警察','job'],['chef','','廚師','job'],
+['engineer','','工程師','job'],['farmer','','農夫','job'],['singer','','歌手','job'],['lawyer','','律師','job'],
+['boss','','老闆','job'],['painter','','畫家','job'],['writer','','作家','job'],['actor','','演員','job'],
+['firefighter','','消防員','job'],['shop assistant','','店員','job'],['pilot','','飛行員','job'],['scientist','','科學家','job'],
+['athlete','','運動員','job'],['office worker','','上班族','job'],['happy','','開心','feel'],['sad','','難過','feel'],
+['angry','','生氣','feel'],['scared','','害怕','feel'],['tired','','累','feel'],['hungry','','餓','feel'],
+['thirsty','','渴','feel'],['love','','愛','feel'],['weather','','天氣','feel'],['sunny','','晴天','feel'],
+['spring','','春天','feel'],['summer','','夏天','feel'],['autumn','','秋天','feel'],['winter','','冬天','feel'],
+['warm','','溫暖','feel'],['cool','','涼爽','feel'],['typhoon','','颱風','feel'],['earthquake','','地震','feel']);
+const WORDS={};
+for(const l in RAW) WORDS[l]=RAW[l].map((a,i)=>({id:l+'-'+i,lang:l,w:a[0],r:a[1],m:a[2],c:a[3],k:a[4]||''}));
+const LANGS=['ko','vi','ja','en'];
+const wd=w=>w.w+(w.k&&w.k!==w.w?'（'+w.k+'）':'');
+const LANG={ko:{name:'韓文',label:'한국어',tts:'ko-KR'},vi:{name:'越南文',label:'Tiếng Việt',tts:''},ja:{name:'日文',label:'日本語',tts:'ja-JP'},en:{name:'英文',label:'English',tts:'en-US'}};
+
+/* ---------- 精靈與元素 ---------- */
+const EL={
+ fire:{n:'火',main:'#f2765a',light:'#ffc08c',dark:'#c93f2a',acc:'#ffd24d',bg:'#ffe3d2'},
+ water:{n:'水',main:'#5cc2d9',light:'#bdeef5',dark:'#2f93b3',acc:'#ffffff',bg:'#d6f3f8'},
+ wood:{n:'木',main:'#7bc36a',light:'#c5e8a0',dark:'#4a9444',acc:'#f5d56a',bg:'#e2f3d0'},
+ thunder:{n:'雷',main:'#ffd23f',light:'#fff0a0',dark:'#e0a800',acc:'#4db8ff',bg:'#fff3c2'},
+ ice:{n:'冰',main:'#9fd0f0',light:'#e4f4ff',dark:'#6aa0d8',acc:'#b9a2f0',bg:'#e3f1fb'},
+ phantom:{n:'幻',main:'#a98bdc',light:'#d9c8f5',dark:'#6c4fb0',acc:'#ffd98a',bg:'#eadff9'}
+};
+const BR='#4a3226';
+const sumL=f=>LANGS.reduce((a,l)=>a+S.langs[l][f],0);
+const totalCorrect=()=>sumL('correct');
+const totalSessions=()=>sumL('sessions');
+const totalPerfects=()=>sumL('perfects');
+const SPIRITS=[
+ {k:'fire',el:'fire',names:['焰米','焰鬃','焰冠王'],rar:1,desc:'活潑熱情的火焰精靈，尾巴上的小火苗從不熄滅。',cond:null},
+ {k:'water',el:'water',names:['漣漣','漣鰭','瀾環靈'],rar:1,desc:'溫和靈巧，走過的地方會留下一圈圈水紋。',cond:{text:'完成 1 次單字試煉',cur:()=>totalSessions(),max:1}},
+ {k:'wood',el:'wood',names:['芽芽','藤芽','森冠鹿'],rar:1,desc:'頭上的嫩芽會隨著學習慢慢長大。',cond:{text:'累計答對 30 題',cur:()=>totalCorrect(),max:30}},
+ {k:'thunder',el:'thunder',names:['閃閃','電閃','雷翼獸'],rar:2,desc:'動作快得只看得到一道黃光。',cond:{text:'玩家達到 Lv.3',cur:()=>levelInfo(S.exp).L,max:3}},
+ {k:'ice',el:'ice',names:['霜霜','霜晶','極光冠'],rar:2,desc:'沉靜優雅，呼出的氣息會結成小冰晶。',cond:{text:'玩家達到 Lv.5',cur:()=>levelInfo(S.exp).L,max:5}},
+ {k:'phantom',el:'phantom',names:['夢夢','幻影','星幻君'],rar:3,desc:'神祕難以捉摸，總是多出一兩個影子。',cond:{text:'完成 1 次十題全對的試煉',cur:()=>totalPerfects(),max:1}}
+,
+ {k:'fire2',el:'fire',style:'b',price:150,rar:2,names:['焰蜥','炎翼龍','焚天龍'],desc:'剛孵化的小火龍，脾氣火爆卻很黏人，翅膀一揮就帶起火星。',pal:{main:'#e8503a',light:'#ff9d6e',dark:'#a8281c',acc:'#ffc83d',bg:'#ffd9c7',belly:'#ffe2a8'}},
+ {k:'water2',el:'water',style:'b',price:150,rar:2,names:['貝貝','珊瑚姬','滄海女王'],desc:'住在深海珊瑚礁的人魚少女，愛唱歌，頭髮像海草一樣會飄。',pal:{main:'#4a9de0',light:'#a9d8ff',dark:'#2a62b0',acc:'#ff9ed1',bg:'#d3e8fb',belly:'#d8efff'}},
+ {k:'wood2',el:'wood',style:'b',price:150,rar:2,names:['菇菇','孢子靈','古樹菇王'],desc:'從森林濕地長出來的蘑菇精靈，安靜愛睡，睡醒頭上的傘蓋會多長一圈。',pal:{main:'#d9574a',light:'#f6e8c9',dark:'#8f3a2f',acc:'#7bc36a',bg:'#fbe3d8',belly:'#f6e8c9'}},
+ {k:'thunder2',el:'thunder',style:'b',price:250,rar:3,names:['電啾','雷羽','天雷鳳'],desc:'毛茸茸的雷雲小鳥，一緊張就會啪啪放電，最愛站在高處。',pal:{main:'#7cc4f4',light:'#eaf7ff',dark:'#3c86c8',acc:'#ffd23f',bg:'#e0f1ff',belly:'#ffffff'}},
+ {k:'ice2',el:'ice',style:'b',price:250,rar:3,names:['雪球','雪靈','冰霜伯爵'],desc:'用初雪捏出來的雪人精靈，圍著紫色圍巾，很怕熱但愛交朋友。',pal:{main:'#f3f8ff',light:'#ffffff',dark:'#a9c4e6',acc:'#9b7fe0',bg:'#ecf3fb',belly:'#ffffff'}},
+ {k:'phantom2',el:'phantom',style:'b',price:350,rar:3,names:['幽幽','月影法師','星夜魔導師'],desc:'戴著尖帽子的小幽靈，練習魔法常常失敗，但月光下會變得很強。',pal:{main:'#6a5bc4',light:'#a79ae8',dark:'#3d3390',acc:'#ffd98a',bg:'#dcd5f5',belly:'#a79ae8'}}
+];
+const SP=Object.fromEntries(SPIRITS.map(s=>[s.k,s]));
+// 讓 EL[精靈代號] 也能取得該精靈自己的配色（第二隻精靈用自己的 pal）
+SPIRITS.forEach(s=>{EL[s.k]=Object.assign({},EL[s.el],s.pal||{},{n:EL[s.el].n})});
+const EVO_AT=[0,150,400], EVO_COST=[0,30,100], ENERGY_CAP=500, STAGE_LABEL=['','幼年期','成長期','進化期'];
+const RARITY=['','★ 普通','★★ 稀有','★★★ 傳說'];
+
+/* ---------- SVG 精靈 ---------- */
+let gid=0;
+const sw=(w)=>`stroke="${BR}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+const SH={
+ flame:(c)=>`<path d="M0 0C-10 -7 -9 -17 0 -30C3 -20 11 -13 8 -6C7 -2 4 0 0 0Z" fill="${c}" ${sw(2.4)}/>`,
+ drop:(c)=>`<path d="M0 0C-8 0 -9 -9 0 -26C9 -9 8 0 0 0Z" fill="${c}" ${sw(2.4)}/>`,
+ leaf:(c)=>`<path d="M0 0C-12 -8 -10 -22 0 -30C10 -22 12 -8 0 0Z" fill="${c}" ${sw(2.4)}/><path d="M0 -3V-22" stroke="${BR}" stroke-width="1.6" fill="none"/>`,
+ bolt:(c)=>`<path d="M2 0L-8 -16L-1 -15L-5 -30L8 -12L1 -13Z" fill="${c}" ${sw(2.4)}/>`,
+ crystal:(c)=>`<path d="M0 0L-7 -12L0 -30L7 -12Z" fill="${c}" ${sw(2.4)}/><path d="M0 -4V-26" stroke="#fff" stroke-opacity=".7" stroke-width="1.5"/>`,
+ star:(c)=>`<path d="M0 -14C1 -5 5 -1 14 0C5 1 1 5 0 14C-1 5 -5 1 -14 0C-5 -1 -1 -5 0 -14Z" fill="${c}" ${sw(2)}/>`,
+ flower:(c)=>[0,72,144,216,288].map(a=>`<circle cx="0" cy="-7" r="5.5" fill="#ffd0dd" ${sw(1.6)} transform="rotate(${a})"/>`).join('')+`<circle r="4" fill="${c}" ${sw(1.6)}/>`
+};
+const PRIM={fire:'flame',water:'drop',wood:'leaf',thunder:'bolt',ice:'crystal',phantom:'star'};
+function put(shape,x,y,s,r,c){return `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})">${SH[shape](c)}</g>`}
+function arc(shape,n,cx,cy,rad,a0,a1,s,c){let o='';for(let i=0;i<n;i++){const a=(a0+(a1-a0)*(n===1?.5:i/(n-1)))*Math.PI/180;o+=put(shape,(cx+rad*Math.cos(a)).toFixed(1),(cy+rad*Math.sin(a)).toFixed(1),s,(a*180/Math.PI+90).toFixed(0),c)}return o}
+const sym=(s)=>s+`<g transform="translate(200 0) scale(-1 1)">${s}</g>`;
+
+function spiritA(el,stage){
+  const c=EL[el],id='sp'+(++gid),prim=PRIM[el];
+  let back='',front='';
+  // 元素專屬的耳朵 / 尾巴 / 頭飾
+  if(el==='fire'){
+    back+=sym(`<path d="M60 96C46 74 54 54 64 40C70 58 88 66 86 92Z" fill="${c.main}" ${sw(3)}/><path d="M64 88C58 76 62 66 66 58C70 68 78 72 78 86Z" fill="${c.acc}"/>`);
+    back+=`<path d="M146 150C176 154 188 128 174 104C170 124 160 128 144 134Z" fill="${c.acc}" ${sw(3)}/>`;
+  }
+  if(el==='water'){
+    back+=sym(`<ellipse cx="60" cy="96" rx="13" ry="24" transform="rotate(-28 60 96)" fill="${c.main}" ${sw(3)}/><ellipse cx="60" cy="96" rx="6" ry="15" transform="rotate(-28 60 96)" fill="${c.light}"/>`);
+    back+=`<path d="M146 152C178 162 190 134 178 114C172 134 162 140 144 140Z" fill="${c.light}" ${sw(3)}/>`;
+    front+=put('drop',100,90,1.1,0,'#e6f9fc');
+  }
+  if(el==='wood'){
+    back+=sym(put('leaf',66,94,1.5,-58,c.light));
+    back+=put('leaf',148,152,1.6,68,c.light);
+    front+=`<path d="M100 78Q100 70 100 66" stroke="${BR}" stroke-width="3" fill="none" stroke-linecap="round"/>`+put('leaf',100,70,.75,-38,c.light)+put('leaf',100,70,.75,38,c.light);
+  }
+  if(el==='thunder'){
+    back+=sym(put('bolt',68,94,1.7,-12,c.dark));
+    back+=`<path d="M146 148L172 142L163 125L188 114L166 113L174 94L148 124L158 132Z" fill="${c.acc}" ${sw(3)}/>`;
+  }
+  if(el==='ice'){
+    back+=sym(put('crystal',72,92,1.6,-24,c.light));
+    back+=put('crystal',150,152,1.1,50,c.light)+put('crystal',154,148,1.3,80,c.acc)+put('crystal',150,146,1.0,110,c.light);
+    front+=put('crystal',100,100,.5,0,c.acc);
+  }
+  if(el==='phantom'){
+    back+=sym(`<path d="M62 96L52 52L92 80Z" fill="${c.main}" ${sw(3)}/><path d="M66 88L60 64L82 80Z" fill="${c.acc}"/>`);
+    back+=`<path d="M148 150C180 150 192 120 174 100C178 124 162 134 148 138Z" fill="${c.light}" ${sw(3)}/>`;
+    front+=put('star',100,94,.55,0,c.acc);
+  }
+  // 成長期 / 進化期 裝飾
+  let pre='';
+  if(stage>=2){
+    const col=el==='water'?c.light:(el==='wood'||el==='ice')?c.light:c.acc;
+    pre+=arc(prim,5,100,122,78,-160,-20,.9,col);
+    front+=`<circle cx="100" cy="162" r="6" fill="${c.acc}" ${sw(2.6)}/><circle cx="98" cy="160" r="1.8" fill="#fff"/>`;
+  }
+  if(stage>=3){
+    const col=el==='water'?c.light:(el==='wood'||el==='ice')?c.light:c.acc;
+    pre=`<circle cx="100" cy="120" r="94" fill="none" stroke="${c.acc}" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round" opacity=".85"/>`+arc(prim,9,100,122,88,-205,25,1.1,col);
+    if(el==='water') back+=sym(`<path d="M50 140C28 150 40 170 18 178" stroke="${c.light}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M50 140C28 150 40 170 18 178" stroke="${BR}" stroke-width="2" fill="none" stroke-dasharray="1 7" stroke-linecap="round"/>`);
+    if(el==='wood') back+=sym(`<path d="M74 84L62 56M68 70L50 64M62 56L60 40" stroke="${BR}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`)+sym(`<g transform="translate(60 40) scale(.8)">${SH.flower(c.acc)}</g><g transform="translate(50 62) scale(.6)">${SH.flower(c.acc)}</g>`);
+    if(el==='thunder') back+=sym(`<path d="M52 120L12 90L26 118L6 126L30 140L16 160L56 142Z" fill="${c.acc}" opacity=".92" ${sw(3)}/>`);
+    if(el==='ice') back+=`<defs><linearGradient id="${id}a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9a2f0"/><stop offset=".5" stop-color="#9fe3d0"/><stop offset="1" stop-color="#9fd0f0"/></linearGradient></defs><path d="M146 152C192 172 204 118 186 92C190 128 170 142 146 142Z" fill="url(#${id}a)" ${sw(2.6)}/>`;
+    if(el==='phantom') pre=`<ellipse cx="62" cy="124" rx="46" ry="42" fill="${c.main}" opacity=".3" stroke="${BR}" stroke-dasharray="4 6"/><ellipse cx="138" cy="124" rx="46" ry="42" fill="${c.main}" opacity=".3" stroke="${BR}" stroke-dasharray="4 6"/>`+pre;
+    // 冠冕
+    front+=put(prim,80,80,.8,-22,c.acc)+put(prim,100,72,1,0,c.acc)+put(prim,120,80,.8,22,c.acc);
+    front+=put('star',34,60,.5,0,c.acc)+put('star',168,70,.4,0,c.acc)+put('star',22,150,.35,0,c.acc);
+    front+=`<path d="M70 108Q80 102 90 108M110 108Q120 102 130 108" stroke="${BR}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  } else if(el==='phantom'&&stage===2){
+    pre=`<ellipse cx="128" cy="124" rx="46" ry="42" fill="${c.main}" opacity=".3" stroke="${BR}" stroke-dasharray="4 6"/>`+pre;
+  }
+  const sc=[.8,.92,1.04][stage-1];
+  const body=`<defs><radialGradient id="${id}b" cx=".35" cy=".28" r=".95"><stop offset="0" stop-color="${c.light}"/><stop offset=".55" stop-color="${c.main}"/><stop offset="1" stop-color="${c.dark}"/></radialGradient></defs>
+  <ellipse cx="80" cy="168" rx="15" ry="8" fill="${c.dark}" ${sw(3)}/><ellipse cx="120" cy="168" rx="15" ry="8" fill="${c.dark}" ${sw(3)}/>
+  <ellipse cx="100" cy="122" rx="52" ry="47" fill="url(#${id}b)" ${sw(3.6)}/>
+  <ellipse cx="100" cy="143" rx="29" ry="21" fill="${c.light}" opacity=".75"/>
+  <ellipse cx="80" cy="116" rx="8" ry="10" fill="#3b2418"/><ellipse cx="120" cy="116" rx="8" ry="10" fill="#3b2418"/>
+  <circle cx="83" cy="112" r="3.3" fill="#fff"/><circle cx="123" cy="112" r="3.3" fill="#fff"/><circle cx="78" cy="120" r="1.6" fill="#fff"/><circle cx="118" cy="120" r="1.6" fill="#fff"/>
+  <ellipse cx="65" cy="131" rx="8" ry="5" fill="#ff9fa0" opacity=".6"/><ellipse cx="135" cy="131" rx="8" ry="5" fill="#ff9fa0" opacity=".6"/>
+  <path d="M92 130Q100 138 108 130" stroke="#3b2418" stroke-width="2.8" fill="none" stroke-linecap="round"/>`;
+  return `<svg class="spirit" viewBox="-14 -14 228 228" role="img" aria-label="${EL[el].n}屬性精靈 ${STAGE_LABEL[stage]}" xmlns="http://www.w3.org/2000/svg"><g transform="translate(100 172) scale(${sc}) translate(-100 -172)">${pre}${back}${body}${front}</g></svg>`;
+}
+
+
+/* ---------- 第二系列精靈（風格 B：站姿造型，各元素輪廓不同於第一隻）---------- */
+const thick=(d,c,w)=>`<path d="${d}" fill="none" stroke="${BR}" stroke-width="${w+5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const faceB=(cy,dx,mouth)=>`<circle cx="${100-dx}" cy="${cy}" r="9.5" fill="#2b1a22"/><circle cx="${100+dx}" cy="${cy}" r="9.5" fill="#2b1a22"/><circle cx="${103-dx}" cy="${cy-4}" r="3.6" fill="#fff"/><circle cx="${103+dx}" cy="${cy-4}" r="3.6" fill="#fff"/><circle cx="${97-dx}" cy="${cy+4}" r="1.8" fill="#fff"/><circle cx="${97+dx}" cy="${cy+4}" r="1.8" fill="#fff"/><ellipse cx="${100-dx-13}" cy="${cy+14}" rx="7" ry="4.5" fill="#ff9fa0" opacity=".6"/><ellipse cx="${100+dx+13}" cy="${cy+14}" rx="7" ry="4.5" fill="#ff9fa0" opacity=".6"/>`+(mouth?`<path d="M94 ${cy+13}Q100 ${cy+21} 106 ${cy+13}" stroke="#2b1a22" stroke-width="2.8" fill="none" stroke-linecap="round"/>`:'');
+function spiritB(key,stage){
+  const sp=SP[key],P=sp.pal,el=sp.el,id='sb'+(++gid),prim=PRIM[el],F=`url(#${id}h)`;
+  const defs=`<defs><radialGradient id="${id}h" cx=".35" cy=".28" r=".95"><stop offset="0" stop-color="${P.light}"/><stop offset=".6" stop-color="${P.main}"/><stop offset="1" stop-color="${P.dark}"/></radialGradient></defs>`;
+  const k=[.8,1,1.28][stage-1],s3=stage>=3,col=el==='water'?P.light:P.acc;
+  const torso=(cy,rx,ry,fill,feet)=>(feet===false?'':`<ellipse cx="84" cy="182" rx="13" ry="7" fill="${P.dark}" ${sw(3)}/><ellipse cx="116" cy="182" rx="13" ry="7" fill="${P.dark}" ${sw(3)}/>`)+`<ellipse cx="${100-rx-2}" cy="${cy-4}" rx="8" ry="12" transform="rotate(20 ${100-rx-2} ${cy-4})" fill="${fill}" ${sw(3)}/><ellipse cx="${100+rx+2}" cy="${cy-4}" rx="8" ry="12" transform="rotate(-20 ${100+rx+2} ${cy-4})" fill="${fill}" ${sw(3)}/><ellipse cx="100" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" ${sw(3.4)}/>`;
+  const headE=(cy,rx,ry,fill)=>`<ellipse cx="100" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill||F}" ${sw(3.6)}/>`;
+  let pre=(s3?`<circle cx="100" cy="112" r="96" fill="none" stroke="${P.acc}" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round" opacity=".85"/>`:'')+(stage>=2?arc(prim,s3?9:5,100,116,s3?90:80,s3?-205:-160,s3?25:-20,s3?1.05:.85,col):'');
+  let back='',mid='',front='';
+  if(el==='fire'){ // 小龍：翅膀、角、長尾巴
+    const w=`<g transform="translate(66 128) scale(${k})"><path d="M0 0C-34 -14 -48 -44 -40 -74C-24 -60 -14 -42 -2 -22Z" fill="${P.dark}" ${sw(3)}/><path d="M-4 -10C-24 -22 -34 -40 -34 -58" stroke="${P.main}" stroke-width="3" fill="none"/></g>`;
+    back=sym(w)+thick('M126 172C158 182 184 166 178 134',P.main,11)+put('flame',178,136,1.3,12,P.acc)+sym(`<path d="M72 72L${64-stage*3} ${52-stage*7}L86 64Z" fill="${P.acc}" ${sw(3)}/>`);
+    mid=torso(154,32,30,F)+`<ellipse cx="100" cy="158" rx="19" ry="22" fill="${P.belly}" opacity=".92"/>`+[146,154,162,170].map(y=>`<path d="M86 ${y}Q100 ${y+4} 114 ${y}" stroke="${P.acc}" stroke-width="2" fill="none" opacity=".7"/>`).join('')+headE(100,46,42)+faceB(100,18,true);
+    front=(stage>=2?put('flame',100,64,.9,0,P.acc):'')+(s3?put('flame',84,68,.7,-25,P.acc)+put('flame',116,68,.7,25,P.acc)+`<circle cx="100" cy="140" r="6" fill="${P.acc}" ${sw(2.6)}/>`:'');
+  }
+  if(el==='water'){ // 人魚：魚尾、長髮、貝殼髮飾
+    const hl=s3?184:170;
+    back=sym(thick(`M58 92C40 118 46 152 68 ${hl}`,P.acc,10))+sym(`<ellipse cx="56" cy="100" rx="8" ry="14" transform="rotate(-20 56 100)" fill="${P.light}" ${sw(3)}/>`);
+    mid=`<path d="M72 150C64 178 78 192 100 190C122 192 136 178 128 150Z" fill="${F}" ${sw(3.4)}/>`+sym(`<path d="M96 188C80 190 64 198 58 212C78 214 92 206 100 194Z" fill="${P.light}" ${sw(3)}/>`)+[162,172].map(y=>`<path d="M84 ${y}Q92 ${y+8} 100 ${y}Q108 ${y+8} 116 ${y}" stroke="${P.light}" stroke-width="2.4" fill="none" opacity=".8"/>`).join('')+torso(146,28,22,F,false)+headE(100,46,42)+`<path d="M56 98C58 56 142 56 144 98C130 78 112 72 100 84C88 72 70 78 56 98Z" fill="${P.acc}" ${sw(3.4)}/>`+faceB(108,18,true);
+    front=`<g transform="translate(132 66)"><path d="M0 0C-12 -2 -14 -14 -6 -20C-2 -12 2 -12 6 -20C14 -14 12 -2 0 0Z" fill="#ffd9e6" ${sw(2.4)}/></g>`+(stage>=2?[84,92,100,108,116].map((x,i)=>`<circle cx="${x}" cy="${[142,146,148,146,142][i]}" r="3.6" fill="#fff" ${sw(1.6)}/>`).join('')+`<circle cx="30" cy="70" r="8" fill="none" stroke="${P.light}" stroke-width="3"/><circle cx="172" cy="92" r="6" fill="none" stroke="${P.light}" stroke-width="3"/>`:'')+(s3?sym(`<path d="M82 60L76 40M76 40L68 34M76 40L80 30" stroke="#ff8fa3" stroke-width="4.5" fill="none" stroke-linecap="round"/>`)+`<circle cx="100" cy="52" r="6" fill="#fff" ${sw(2.4)}/>`:'');
+  }
+  if(el==='wood'){ // 蘑菇精：傘蓋 + 小身體
+    const cap=`<path d="M40 94C38 40 162 40 160 94C140 84 60 84 40 94Z" fill="${F}" ${sw(3.6)}/>`+[[70,68,7],[104,56,8],[132,74,6],[88,82,4],[118,86,4]].map(a=>`<circle cx="${a[0]}" cy="${a[1]}" r="${a[2]}" fill="#fff8ec" ${sw(1.8)}/>`).join('');
+    back=s3?sym(thick('M48 96C40 122 50 140 40 164',P.acc,5)):'';
+    mid=torso(160,28,24,P.light)+sym(put('leaf',86,140,1.1,-75,P.acc))+headE(108,38,32,P.light)+faceB(112,15,true)+(s3?`<g transform="translate(100 94) scale(1.12) translate(-100 -94)">${cap}</g>`:cap);
+    front=(stage>=2?[[60,54],[142,60]].map(a=>`<ellipse cx="${a[0]}" cy="${a[1]}" rx="9" ry="6" fill="${P.acc}" ${sw(2)}/><rect x="${a[0]-2}" y="${a[1]}" width="4" height="7" fill="${P.light}" ${sw(1.6)}/>`).join(''):'')+(s3?sym(`<g transform="translate(40 164) scale(.6)">${SH.flower(P.acc)}</g>`):'');
+  }
+  if(el==='thunder'){ // 雷鳥：翅膀、冠羽、尖嘴
+    const w=`<g transform="translate(60 134) scale(${k})"><path d="M0 0C-32 -4 -48 -30 -44 -58C-26 -48 -12 -32 -2 -14Z" fill="${P.main}" ${sw(3)}/><path d="M-6 -10C-22 -16 -32 -30 -36 -44" stroke="${P.light}" stroke-width="3" fill="none"/>${put('bolt',-44,-56,1.1,-10,P.acc)}</g>`;
+    back=sym(w)+put('bolt',132,172,1.6,75,P.acc)+put('bolt',138,160,1.3,100,P.acc);
+    mid=torso(152,34,30,F,false)+`<ellipse cx="100" cy="158" rx="22" ry="20" fill="${P.belly}" opacity=".95"/><path d="M88 178V190M112 178V190M82 190H94M106 190H118" stroke="${P.acc}" stroke-width="5" stroke-linecap="round"/>`+headE(98,44,40)+faceB(98,19,false)+`<path d="M91 110L109 110L100 124Z" fill="${P.acc}" ${sw(2.6)}/>`;
+    front=put('bolt',92,62,.9,-20,P.acc)+put('bolt',100,56,1.1,0,P.acc)+put('bolt',108,62,.9,20,P.acc);
+  }
+  if(el==='ice'){ // 雪人：雙層雪球、圍巾、樹枝手
+    back=aurora(id,s3)+sym(`<path d="M62 150L38 138M46 143L40 128M46 143L33 145" stroke="#6b4a37" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+    mid=`<ellipse cx="100" cy="152" rx="42" ry="34" fill="${F}" ${sw(3.4)}/><circle cx="100" cy="150" r="3.6" fill="#4a3226"/><circle cx="100" cy="166" r="3.6" fill="#4a3226"/><ellipse cx="86" cy="184" rx="13" ry="6" fill="${P.dark}" ${sw(3)}/><ellipse cx="114" cy="184" rx="13" ry="6" fill="${P.dark}" ${sw(3)}/>`+headE(96,38,36)+faceB(98,16,false)+`<path d="M97 106L103 106L100 120Z" fill="#8fd0f5" ${sw(2.2)}/>`+[92,96,104,108].map((x,i)=>`<circle cx="${x}" cy="${[124,127,127,124][i]}" r="1.8" fill="#2b1a22"/>`).join('')+`<path d="M62 128C82 144 118 144 138 128L138 140C118 156 82 156 62 140Z" fill="${P.acc}" ${sw(3)}/><path d="M124 142L136 168L148 160L138 138Z" fill="${P.acc}" ${sw(3)}/>`;
+    front=(stage===1?put('crystal',100,62,.8,0,'#bfe6ff'):stage===2?put('crystal',84,66,.8,-25,'#bfe6ff')+put('crystal',100,58,1,0,'#bfe6ff')+put('crystal',116,66,.8,25,'#bfe6ff')+put('star',40,80,.5,0,'#bfe6ff')+put('star',162,100,.45,0,'#bfe6ff'):put('crystal',78,70,.9,-30,'#bfe6ff')+put('crystal',90,58,1.2,-10,'#d8f2ff')+put('crystal',100,50,1.5,0,'#bfe6ff')+put('crystal',110,58,1.2,10,'#d8f2ff')+put('crystal',122,70,.9,30,'#bfe6ff')+`<circle cx="100" cy="166" r="6" fill="#bfe6ff" ${sw(2.4)}/>`);
+  }
+  if(el==='phantom'){ // 小幽靈法師：尖帽、飄動下擺
+    const hs=stage>=3?1.15:1;
+    if(s3)back=`<path d="M56 100C30 140 30 180 44 192L156 192C170 180 170 140 144 100Z" fill="${P.dark}" opacity=".85" ${sw(3)}/>`;
+    if(stage>=2)back+=thick('M158 100V184',P.acc,4);
+    mid=`<path d="M52 112C52 62 148 62 148 112L148 168Q138 184 124 170Q112 186 100 170Q88 186 76 170Q62 184 52 168Z" fill="${F}" ${sw(3.6)}/><ellipse cx="50" cy="138" rx="8" ry="11" transform="rotate(20 50 138)" fill="${F}" ${sw(3)}/><ellipse cx="150" cy="138" rx="8" ry="11" transform="rotate(-20 150 138)" fill="${F}" ${sw(3)}/>`+faceB(112,19,true)+`<g transform="translate(100 78) scale(${hs}) translate(-100 -78)"><path d="M62 78C70 54 90 34 108 16C106 36 120 58 138 78C116 84 84 84 62 78Z" fill="${P.dark}" ${sw(3.4)}/><path d="M62 78C84 90 116 90 138 78" stroke="${P.acc}" stroke-width="4" fill="none" stroke-linecap="round"/>${put('star',106,52,.6,0,P.acc)}</g>`;
+    front=(stage>=2?put('star',158,96,.9,0,P.acc)+[[34,84,8],[170,140,7],[26,150,6]].map(a=>`<circle cx="${a[0]}" cy="${a[1]}" r="${a[2]}" fill="${P.acc}" opacity=".85" ${sw(1.8)}/>`).join(''):'')+(s3?[[40,52,6],[162,50,7],[178,110,5]].map(a=>`<circle cx="${a[0]}" cy="${a[1]}" r="${a[2]}" fill="${P.acc}" opacity=".85" ${sw(1.8)}/>`).join('')+put('star',30,108,.5,0,P.acc):'');
+  }
+  const sc=[.82,.93,1.03][stage-1];
+  return `<svg class="spirit" viewBox="-14 -14 228 228" role="img" aria-label="${EL[el].n}屬性精靈 ${STAGE_LABEL[stage]}" xmlns="http://www.w3.org/2000/svg">${defs}<g transform="translate(100 190) scale(${sc}) translate(-100 -190)">${pre}${back}${mid}${front}</g></svg>`;
+}
+function aurora(id,on){return on?`<defs><linearGradient id="${id}a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9a2f0"/><stop offset=".5" stop-color="#9fe3d0"/><stop offset="1" stop-color="#9fd0f0"/></linearGradient></defs><path d="M50 110C20 150 24 190 40 196L160 196C176 190 180 150 150 110Z" fill="url(#${id}a)" opacity=".85" ${sw(3)}/>`:''}
+function spiritSVG(key,stage){const sp=SP[key];return sp.pal?spiritB(key,stage):spiritA(sp.el,stage)}
+
+function sceneSVG(){
+  return `<svg class="scene" viewBox="0 0 600 340" preserveAspectRatio="xMidYMid slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9c9f4"/><stop offset=".6" stop-color="#fbe9d2"/><stop offset="1" stop-color="#fff3d9"/></linearGradient></defs>
+  <rect width="600" height="340" fill="url(#sk)"/>
+  <circle cx="500" cy="70" r="34" fill="#fff3c4" stroke="#e6c36a" stroke-width="3"/>
+  <g fill="#fff" opacity=".8"><ellipse cx="110" cy="70" rx="46" ry="14"/><ellipse cx="140" cy="60" rx="30" ry="12"/><ellipse cx="420" cy="120" rx="40" ry="11"/></g>
+  <path d="M0 230C90 190 170 200 260 220C350 195 470 190 600 225V340H0Z" fill="#c9dfae" stroke="#4a3226" stroke-width="3"/>
+  <g stroke="#4a3226" stroke-width="3" stroke-linejoin="round">
+   <rect x="238" y="110" width="124" height="112" fill="#efe3f8"/>
+   <rect x="196" y="140" width="48" height="82" fill="#e4d6f2"/><rect x="356" y="140" width="48" height="82" fill="#e4d6f2"/>
+   <path d="M232 112L300 40L368 112Z" fill="#8b6bc9"/><path d="M190 142L220 92L250 142Z" fill="#a283e0"/><path d="M350 142L380 92L410 142Z" fill="#a283e0"/>
+   <path d="M280 222V180Q300 156 320 180V222Z" fill="#7d6150"/>
+   <rect x="262" y="128" width="20" height="28" rx="10" fill="#ffe08a"/><rect x="318" y="128" width="20" height="28" rx="10" fill="#ffe08a"/>
+   <rect x="210" y="166" width="16" height="22" rx="8" fill="#ffe08a"/><rect x="374" y="166" width="16" height="22" rx="8" fill="#ffe08a"/>
+  </g>
+  <path d="M300 40V22" stroke="#4a3226" stroke-width="3"/><path d="M300 22L322 29L300 36Z" fill="#e6c36a" stroke="#4a3226" stroke-width="2"/>
+  <g stroke="#4a3226" stroke-width="3"><rect x="64" y="196" width="10" height="40" fill="#7d6150"/><circle cx="69" cy="184" r="30" fill="#8fc27a"/><rect x="520" y="200" width="10" height="38" fill="#7d6150"/><circle cx="525" cy="188" r="28" fill="#7fb56c"/><circle cx="488" cy="214" r="18" fill="#9bcf86"/></g>
+  <path d="M0 280C120 250 240 270 340 262C440 254 520 270 600 276V340H0Z" fill="#aed18f" stroke="#4a3226" stroke-width="3"/>
+  <g stroke="#4a3226" stroke-width="2.5"><rect x="70" y="288" width="32" height="12" rx="2" fill="#cf5a4a" transform="rotate(-8 86 294)"/><rect x="74" y="280" width="30" height="10" rx="2" fill="#5d4296" transform="rotate(4 89 285)"/></g>
+  </svg>`;
+}
+const LOGO=`<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3L25 15L37 16L28 24L31 36L20 30L9 36L12 24L3 16L15 15Z" fill="#e6c36a" stroke="#4a3226" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="21" r="5" fill="#8b6bc9" stroke="#4a3226" stroke-width="2"/></svg>`;
+const ICONS={
+ home:'<path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z"/>',
+ quiz:'<path d="M5 4h13v16H7a2 2 0 0 1-2-2zM5 18a2 2 0 0 1 2-2h11"/>',
+ ranch:'<circle cx="8" cy="9" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="5" cy="14" r="2"/><circle cx="19" cy="14" r="2"/><path d="M12 13c-3 0-5 3-5 5 0 2 2 2 5 1 3 1 5 1 5-1 0-2-2-5-5-5z"/>',
+ dex:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+ review:'<path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/>',
+ more:'<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>',
+ coin:'<circle cx="12" cy="12" r="9"/><path d="M12 6v12M9 9.5h4.5a2 2 0 0 1 0 4H9"/>',
+ trophy:'<path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"/>',
+ set:'<circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'
+};
+const PAGES=[['home','首頁','home'],['quiz','單字試煉','quiz'],['ranch','精靈牧場','ranch'],['dex','元素圖鑑','dex'],['more','更多','more']];
+const SUB=['fast','review','ach','set'];
+const navOf=pg=>pg==='result'?'quiz':SUB.includes(pg)?'more':pg;
+
+/* ---------- 狀態 ---------- */
+const KEY='wordmon_v1';
+const newLang=()=>({answered:0,correct:0,streak:0,best:0,sessions:0,perfects:0,mastery:{},wrong:[]});
+const defaults=()=>({v:1,exp:0,coins:0,lang:'ko',active:'fire',
+  langs:Object.fromEntries(LANGS.map(l=>[l,newLang()])),
+  spirits:Object.fromEntries(SPIRITS.map(s=>[s.k,{unlocked:s.k==='fire',energy:0,level:1,stage:1}])),
+  badges:{},daily:{date:'',count:0},stats:{evolutions:0},settings:{ask:true,askSet:false},fast:{date:'',coins:0,best:0}});
+function assign(t,s){for(const k in s){if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])&&t[k]&&typeof t[k]==='object'&&!Array.isArray(t[k]))assign(t[k],s[k]);else t[k]=s[k]}return t}
+function load(){const d=defaults();try{const r=localStorage.getItem(KEY);if(r)assign(d,JSON.parse(r))}catch(e){}if(!d.settings.askSet)d.settings.ask=true;return d}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+function dailyCount(){return S.daily.date===today()?S.daily.count:0}
+
+/* ---------- 等級 ---------- */
+const need=L=>100+(L-1)*40;
+function levelInfo(exp){let L=1,r=exp;while(L<30&&r>=need(L)){r-=need(L);L++}return{L,rem:r,need:need(L)}}
+const titleOf=L=>L>=15?'星輝大法師':L>=10?'高階魔法師':L>=5?'正式魔法師':'見習學徒';
+const AREAS=[['魔法學院大廳',1,'一切旅程的起點。'],['單字試煉教室',1,'每天在這裡練習單字。'],['精靈牧場',2,'與精靈相處、培育的草地。'],['元素圖書館',4,'收藏六大元素的古老藏書。'],['森林探索區',6,'精靈們喜愛的神祕森林。'],['六元素聖塔',10,'星輝大法師才能登上的高塔。']];
+const BADGES=[
+ ['first','初試啼聲','完成第一次單字試煉',()=>totalSessions()>=1],
+ ['perfect','完美魔法','十題全部答對',()=>totalPerfects()>=1],
+ ['streak5','連擊新手','連續答對 5 題',()=>Math.max(...LANGS.map(l=>S.langs[l].best))>=5],
+ ['streak10','連擊達人','連續答對 10 題',()=>Math.max(...LANGS.map(l=>S.langs[l].best))>=10],
+ ['c50','五十詞','累計答對 50 題',()=>totalCorrect()>=50],
+ ['c200','兩百詞','累計答對 200 題',()=>totalCorrect()>=200],
+ ['lv5','正式魔法師','玩家達到 Lv.5',()=>levelInfo(S.exp).L>=5],
+ ['both','雙語學徒','至少兩種語言都完成試煉',()=>LANGS.filter(l=>S.langs[l].sessions>=1).length>=2],
+ ['all4','四語旅人','四種語言都完成試煉',()=>LANGS.every(l=>S.langs[l].sessions>=1)],
+ ['evo','初次進化','讓任一精靈進化',()=>S.stats.evolutions>=1],
+ ['all','精靈大師','收集全部精靈',()=>SPIRITS.every(s=>S.spirits[s.k].unlocked)]
+];
+function checkUnlocks(){const got=[];for(const s of SPIRITS){const st=S.spirits[s.k];if(!st.unlocked&&s.cond&&s.cond.cur()>=s.cond.max){st.unlocked=true;got.push(s.k)}}return got}
+function checkBadges(){const got=[];for(const b of BADGES){if(!S.badges[b[0]]&&b[3]()){S.badges[b[0]]=true;got.push(b)}}return got}
+
+/* ---------- 測驗 ---------- */
+let Q=null,page='home';
+const rnd=n=>Math.floor(Math.random()*n);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function buildQuiz(mode){
+  const lang=S.lang,L=S.langs[lang],pool=WORDS[lang];
+  let picks=[];
+  if(mode==='review'){picks=shuffle(L.wrong.map(id=>pool.find(w=>w.id===id)).filter(Boolean)).slice(0,10)}
+  const rest=pool.filter(w=>!picks.includes(w));
+  while(picks.length<10){
+    const ws=rest.map(w=>(L.wrong.includes(w.id)?3:1)/(1+(L.mastery[w.id]||0)));
+    let t=Math.random()*ws.reduce((a,b)=>a+b,0),i=0;
+    for(;i<ws.length-1;i++){t-=ws[i];if(t<=0)break}
+    picks.push(rest.splice(i,1)[0]);
+  }
+  shuffle(picks);
+  const qs=picks.map(w=>{
+    const others=shuffle(pool.filter(x=>x.c===w.c&&x.m!==w.m)).slice(0,3);
+    const choices=shuffle([w,...others]);
+    return{w,choices,ci:choices.indexOf(w),done:false,pick:-1,ok:null};
+  });
+  return{mode,lang,qs,idx:0,correct:0,exp:0,coins:0,energy:0,bonus:0,levelUps:[],wrong:[],finished:false,unlocked:[],badges:[],spirit:S.active};
+}
+function gainExp(n){const b=levelInfo(S.exp).L;S.exp+=n;const a=levelInfo(S.exp).L;if(a>b&&Q){Q.levelUps.push(a);toast('升級！Lv.'+a+'　'+titleOf(a))}}
+function gainEnergy(n){const sp=S.spirits[S.active];sp.energy=Math.min(ENERGY_CAP,sp.energy+n);sp.level=Math.min(10,1+Math.floor(sp.energy/50))}
+function answer(i){
+  if(!Q||Q.finished)return;
+  const q=Q.qs[Q.idx];if(!q||q.done)return;
+  q.done=true;q.pick=i;q.ok=(i===q.ci);
+  const L=S.langs[Q.lang];L.answered++;
+  if(q.ok){
+    Q.correct++;L.correct++;L.streak++;L.best=Math.max(L.best,L.streak);
+    L.mastery[q.w.id]=Math.min(5,(L.mastery[q.w.id]||0)+1);
+    gainExp(10);S.coins+=5;gainEnergy(10);Q.exp+=10;Q.coins+=5;Q.energy+=10;
+    if(Q.mode==='review')L.wrong=L.wrong.filter(x=>x!==q.w.id);
+  }else{
+    L.streak=0;L.mastery[q.w.id]=0;if(!L.wrong.includes(q.w.id))L.wrong.push(q.w.id);Q.wrong.push(q.w);
+  }
+  save();draw();
+}
+function nextQ(){
+  if(!Q)return;const q=Q.qs[Q.idx];if(!q.done)return;
+  if(Q.idx<9){Q.idx++;draw()}else finish();
+}
+function finish(){
+  if(Q.finished){page='result';draw();return}
+  Q.finished=true;
+  const L=S.langs[Q.lang];
+  Q.bonus=20;gainExp(20);L.sessions++;
+  if(Q.correct===10)L.perfects++;
+  if(S.daily.date!==today()){S.daily.date=today();S.daily.count=0}S.daily.count++;
+  Q.unlocked=checkUnlocks();Q.badges=checkBadges();
+  save();page='result';draw();
+}
+
+/* ---------- 繪製 ---------- */
+const $=s=>document.querySelector(s);
+const bar=(p,cls)=>`<div class="bar ${cls||''}"><i style="width:${Math.max(0,Math.min(100,p))}%"></i></div>`;
+function topbar(){
+  const li=levelInfo(S.exp);
+  return `<div class="card top gilt"><div class="logo">${LOGO}Wordmon</div>
+  <div class="lvl"><div class="lvl-t"><span>Lv.${li.L} ${titleOf(li.L)}</span><span>EXP ${li.rem}/${li.need}</span></div>${bar(li.rem/li.need*100)}</div>
+  <div class="coins" title="金幣"><span class="coin"></span><span>${S.coins}</span></div>
+  <div class="seg" role="group" aria-label="學習語言">${LANGS.map(l=>`<button data-act="lang" data-v="${l}" aria-pressed="${S.lang===l}">${LANG[l].label}</button>`).join('')}</div></div>`;
+}
+function nav(){return `<nav class="nav card" style="padding:8px" aria-label="主選單">${PAGES.map(p=>`<button data-act="go" data-v="${p[0]}" ${navOf(page)===p[0]?'aria-current="page"':''}><svg viewBox="0 0 24 24">${ICONS[p[2]]}</svg><span>${p[1]}</span></button>`).join('')}</nav>`}
+function nextGoal(){
+  for(const s of SPIRITS){const st=S.spirits[s.k];if(!st.unlocked&&s.price){return{title:'購買「'+s.names[0]+'」（'+EL[s.k].n+'）',text:s.price+' 金幣',cur:Math.min(S.coins,s.price),max:s.price}}if(!st.unlocked){const c=s.cond;return{title:'解鎖「'+s.names[0]+'」（'+EL[s.k].n+'）',text:c.text,cur:Math.min(c.cur(),c.max),max:c.max}}}
+  const sp=S.spirits[S.active];
+  if(sp.stage<3)return{title:SP[S.active].names[0]+'進化為「'+SP[S.active].names[sp.stage]+'」',text:'培育能量 '+EVO_AT[sp.stage],cur:Math.min(sp.energy,EVO_AT[sp.stage]),max:EVO_AT[sp.stage]};
+  const nx=levelInfo(S.exp);return{title:'提升玩家等級',text:'下一級 EXP '+nx.need,cur:nx.rem,max:nx.need};
+}
+function aside(){
+  const sp=S.spirits[S.active],info=SP[S.active],g=nextGoal();
+  const got=SPIRITS.filter(s=>S.spirits[s.k].unlocked).length,dc=dailyCount();
+  const th=sp.stage<3?EVO_AT[sp.stage]:ENERGY_CAP;
+  return `<div class="side">
+  <div class="card"><h3>今日挑戰</h3><div class="row" style="justify-content:space-between"><b class="big">${Math.min(dc,3)}/3</b><span class="small muted">${dc>=3?'今日目標達成':'再完成 '+(3-dc)+' 次'}</span></div>${bar(Math.min(dc,3)/3*100,'gold')}</div>
+  <div class="card"><h3>主精靈</h3><div class="row" style="flex-wrap:nowrap"><div style="width:84px;flex:none">${spiritSVG(S.active,sp.stage)}</div><div style="min-width:0"><b>${info.names[sp.stage-1]}</b><div class="small muted">Lv.${sp.level}・${STAGE_LABEL[sp.stage]}</div></div></div><div class="small muted" style="margin:6px 0 4px">培育能量 ${sp.energy}/${th}</div>${bar(sp.energy/th*100)}</div>
+  <div class="card"><h3>圖鑑收集</h3><b class="big">${got}/${SPIRITS.length}</b> <span class="small muted">隻精靈</span>${bar(got/SPIRITS.length*100,'gold')}</div>
+  <div class="card"><h3>下一個目標</h3><div style="font-weight:700">${g.title}</div><div class="small muted" style="margin:2px 0 6px">${g.text}（${g.cur}/${g.max}）</div>${bar(g.cur/g.max*100)}</div></div>`;
+}
+
+/* ---------- 精靈猜猜看（60 秒快速賺金幣）----------
+   精靈說出「單字＝中文意思」，玩家判斷對或不對。答對 +2 金幣，連續答對每 5 題再 +5。
+   答錯會失去一顆愛心（共 3 顆），並把單字加入該語言的錯題紀錄。
+   每天最多從這個模式拿 FAST_CAP 金幣，之後仍可練習但不再發金幣。 */
+const FAST_CAP=400,FAST_SEC=60,FAST_BASE=2,FAST_COMBO=5;
+let F=null,fastTimer=null,fastNext=null;
+const fastLeft=()=>{if(S.fast.date!==today()){S.fast.date=today();S.fast.coins=0}return Math.max(0,FAST_CAP-S.fast.coins)};
+function stopFast(){clearInterval(fastTimer);clearTimeout(fastNext);fastTimer=null;fastNext=null}
+function fastPick(){
+  const L=S.langs[F.lang],pool=WORDS[F.lang].filter(w=>!F.recent.includes(w.id));
+  const ws=pool.map(w=>(L.wrong.includes(w.id)?3:1)/(1+(L.mastery[w.id]||0)));
+  let t=Math.random()*ws.reduce((a,b)=>a+b,0),i=0;for(;i<ws.length-1;i++){t-=ws[i];if(t<=0)break}
+  const w=pool[i];F.recent.push(w.id);if(F.recent.length>12)F.recent.shift();
+  const truth=Math.random()<.5;
+  let shown=w.m;
+  if(!truth){const others=WORDS[F.lang].filter(x=>x.c===w.c&&x.m!==w.m);shown=others[rnd(others.length)].m}
+  F.cur={w,truth,shown};F.fb=null;F.lock=false;
+}
+function startFast(){
+  stopFast();
+  F={lang:S.lang,spirit:S.active,hearts:3,coins:0,correct:0,wrong:0,combo:0,best:0,missed:[],over:false,recent:[],capped:fastLeft()<=0,t0:Date.now(),fb:null,lock:false};
+  fastPick();
+  fastTimer=setInterval(fastTick,200);
+  draw();
+}
+function fastTick(){
+  if(!F||F.over){stopFast();return}
+  const left=Math.max(0,FAST_SEC*1000-(Date.now()-F.t0));
+  const t=document.getElementById('ft'),b=document.querySelector('#fbar>i');
+  if(t)t.textContent=Math.ceil(left/1000);if(b)b.style.width=(left/(FAST_SEC*10))+'%';
+  if(left<=0)endFast();
+}
+function endFast(){
+  if(!F||F.over)return;
+  F.over=true;stopFast();
+  S.fast.best=Math.max(S.fast.best,F.coins);save();draw();
+}
+function fastAnswer(sayYes){
+  if(!F||F.over||F.lock)return;
+  F.lock=true;
+  const c=F.cur,ok=(sayYes===c.truth),L=S.langs[F.lang];
+  L.mastery[c.w.id]=ok?Math.min(5,(L.mastery[c.w.id]||0)+1):0;
+  let award=0;
+  if(ok){
+    F.correct++;F.combo++;F.best=Math.max(F.best,F.combo);
+    award=FAST_BASE+(F.combo%FAST_COMBO===0?FAST_COMBO:0);
+    award=Math.min(award,fastLeft());
+    S.coins+=award;S.fast.coins+=award;F.coins+=award;
+  }else{
+    F.wrong++;F.hearts--;F.combo=0;
+    if(!L.wrong.includes(c.w.id))L.wrong.push(c.w.id);
+    F.missed.push(c.w);
+  }
+  F.fb={ok,award};save();
+  if(F.hearts<=0){draw();fastNext=setTimeout(endFast,650);return}
+  draw();
+  fastNext=setTimeout(()=>{if(!F||F.over)return;fastPick();draw()},ok?420:900);
+}
+function fastView(){
+  const left=fastLeft(),pct=S.fast.coins/FAST_CAP*100;
+  if(!F)return `<div class="card gilt"><h2>精靈猜猜看</h2>
+  <p>精靈會說出「單字＝中文意思」，你判斷<b>對或不對</b>。60 秒內答得越多、連擊越高，金幣越多。</p>
+  <ul class="small" style="line-height:1.9;padding-left:20px;margin:6px 0 12px"><li>答對 +${FAST_BASE} 金幣，連續答對每 ${FAST_COMBO} 題再 +${FAST_COMBO}</li><li>共 3 顆愛心，答錯扣 1 顆，扣完就結束</li><li>答錯的單字會加入${LANG[S.lang].name}錯題紀錄，方便複習</li></ul>
+  <div class="small" style="margin-bottom:4px"><b>今日已賺</b> ${S.fast.date===today()?S.fast.coins:0} / ${FAST_CAP} 金幣　<span class="muted">最高單局 ${S.fast.best}</span></div>${bar(pct,'gold')}
+  ${left<=0?'<div class="banner" style="margin-top:10px">今天的金幣已達上限，仍可練習，但不會再發金幣。</div>':''}
+  <div class="row" style="margin-top:14px"><button class="btn gold big" data-act="fstart">開始（${LANG[S.lang].name}）</button></div></div>`;
+  if(F.over){
+    const tot=F.correct+F.wrong,acc=tot?Math.round(F.correct/tot*100):0;
+    return `<div class="card gilt"><h2>猜猜看結算</h2><div class="score">+${F.coins}<span style="font-size:.4em"> 金幣</span></div><div class="muted">${LANG[F.lang].name}・${F.hearts<=0?'愛心用完了':'時間到'}</div>
+    <div class="rw"><div><b>${F.correct}</b>答對</div><div><b>${F.wrong}</b>答錯</div><div><b>${acc}%</b>正確率</div><div><b>${F.best}</b>最高連擊</div></div>
+    ${F.capped||left<=0?'<div class="banner">今天的猜猜看金幣已達上限。</div>':`<div class="small muted">今日還可賺 ${left} 金幣</div>`}
+    ${F.missed.length?`<h3 style="margin-top:12px">答錯的單字</h3><ul class="wl">${F.missed.map(w=>`<li><span lang="${w.lang}"><b>${wd(w)}</b> ${w.r?'<span class="muted small">'+w.r+'</span>':''}</span><span>${w.m}</span></li>`).join('')}</ul>`:'<p class="muted">沒有答錯，太厲害了！</p>'}
+    <div class="row" style="margin-top:14px"><button class="btn gold" data-act="fstart">再玩一次</button><button class="btn ghost" data-act="go" data-v="home">回首頁</button></div></div>`;
+  }
+  const c=F.cur,sp=S.spirits[F.spirit],fb=F.fb,left0=Math.max(0,FAST_SEC*1000-(Date.now()-F.t0));
+  return `<div class="card gilt"><div class="qhead"><b>剩餘 <span id="ft">${Math.ceil(left0/1000)}</span> 秒</b><span aria-label="愛心">${[0,1,2].map(i=>`<span class="hrt ${i<F.hearts?'on':''}">♥</span>`).join('')}</span><b>本局 +${F.coins}</b></div>
+  <div class="bar gold" id="fbar"><i style="width:${left0/(FAST_SEC*10)}%"></i></div>
+  <div class="fstage"><div class="fpet ${fb?(fb.ok?'happy':'sad'):''}">${spiritSVG(F.spirit,sp.stage)}${fb&&fb.ok?`<span class="plus">+${fb.award}</span>`:''}</div>
+  <div class="bubble ${fb?(fb.ok?'ok':'no'):''}"><div class="w" lang="${F.lang}">${c.w.w}</div><div class="r">${c.w.r||''}</div>
+  <div class="eq">＝ <b>${fb&&!fb.ok?c.w.m:c.shown}</b> ？</div>${fb&&!fb.ok?`<div class="small" style="margin-top:4px">${c.truth?'這是對的':'你看到的是「'+c.shown+'」，正確是「'+c.w.m+'」'}</div>`:''}</div></div>
+  <div class="yn"><button class="btn no" data-act="fno" ${F.lock?'disabled':''}>✗ 不對　←</button><button class="btn yes" data-act="fyes" ${F.lock?'disabled':''}>✓ 對　→</button></div>
+  <div class="small muted" style="margin-top:10px;text-align:center">連擊 ${F.combo}${F.combo>0?'　再 '+(FAST_COMBO-F.combo%FAST_COMBO)+' 題有連擊獎勵':''}</div></div>`;
+}
+
+const VIEWS={
+fast(){return fastView()},
+more(){
+  const nw=S.langs[S.lang].wrong.length,used=S.fast.date===today()?S.fast.coins:0;
+  return `<div class="card"><h2>更多</h2><div class="menu" style="margin-top:0">
+   <button data-act="go" data-v="fast"><b>精靈猜猜看</b><span class="small muted">60 秒快速賺金幣・今日 ${used}/${FAST_CAP}</span></button>
+   <button data-act="go" data-v="review"><b>錯題複習</b><span class="small muted">${nw?LANG[S.lang].name+' '+nw+' 個待複習':'目前沒有錯題'}</span></button>
+   <button data-act="go" data-v="ach"><b>成就與探索</b><span class="small muted">${Object.keys(S.badges).length}/${BADGES.length} 枚徽章</span></button>
+   <button data-act="go" data-v="set"><b>設定</b><span class="small muted">語言、統計、重置</span></button></div></div>`;
+},
+home(){
+  const sp=S.spirits[S.active],L=S.langs[S.lang],nw=L.wrong.length;
+  return `<div class="card hero gilt">${sceneSVG()}<div class="tag">正在學習：${LANG[S.lang].name}</div>
+  <div class="pet">${spiritSVG(S.active,sp.stage)}</div>
+  <div class="cta"><button class="btn gold big" data-act="start" data-v="normal">開始單字試煉</button></div></div>
+  <div class="chips" style="margin:12px 0 0" role="group" aria-label="主精靈"><span class="small muted" style="align-self:center">主精靈</span>${SPIRITS.filter(s=>S.spirits[s.k].unlocked).map(s=>`<button class="chip" data-act="active" data-v="${s.k}" aria-pressed="${s.k===S.active}"><span class="dot" style="background:${EL[s.k].main}"></span>${s.names[S.spirits[s.k].stage-1]}</button>`).join('')}</div>
+  <div class="menu">
+   <button data-act="go" data-v="quiz"><b>單字試煉</b><span class="small muted">十題四選一</span></button>
+   <button data-act="go" data-v="ranch"><b>精靈牧場</b><span class="small muted">培育與進化</span></button>
+   <button data-act="go" data-v="dex"><b>元素圖鑑</b><span class="small muted">六大元素收藏</span></button>
+   <button data-act="go" data-v="more"><b>更多</b><span class="small muted">猜猜看、錯題、成就、設定</span></button>
+  </div>`;
+},
+quiz(){
+  if(!Q||Q.finished)return `<div class="card"><h2>單字試煉教室</h2><p>目前學習語言：<b>${LANG[S.lang].name}</b>。每次十題，答對得 10 EXP、5 金幣與 10 點精靈能量，完成挑戰再加 20 EXP。</p>
+  <div class="row"><button class="btn gold big" data-act="start" data-v="normal">開始試煉</button><button class="btn ghost" data-act="start" data-v="review">${S.langs[S.lang].wrong.length?'錯題複習（'+S.langs[S.lang].wrong.length+'）':'複習模式'}</button></div></div>`;
+  const q=Q.qs[Q.idx];
+  return `<div class="card"><div class="qhead"><b>第 ${Q.idx+1} / 10 題${Q.mode==='review'?'・錯題複習':''}</b><div class="dots" aria-label="作答進度">${Q.qs.map((x,i)=>`<i class="${x.done?(x.ok?'ok':'no'):i===Q.idx?'cur':''}"></i>`).join('')}</div></div>
+  <div class="word"><div class="w" lang="${S.lang}">${q.w.w}</div><div class="r">${q.w.r||'&nbsp;'}</div>${LANG[S.lang].tts?'<button class="speak" data-act="speak">🔊 發音</button>':''}</div>
+  <div class="choices">${q.choices.map((c,i)=>{let cl='';if(q.done){if(i===q.ci)cl='right';else if(i===q.pick)cl='wrong'}return `<button class="choice ${cl}" data-act="pick" data-v="${i}" ${q.done?'disabled':''}><span class="k">${i+1}</span>${c.m}</button>`}).join('')}</div>
+  ${q.done?`<div class="fb ${q.ok?'ok':'no'}"><div>${q.ok?'答對了！':'答錯了'}　<span lang="${S.lang}">${wd(q.w)}</span> ＝ ${q.w.m}<div class="gain">${q.ok?'+10 EXP　+5 金幣　+10 培育能量':'已加入錯題紀錄'}</div></div><button class="btn" data-act="next">${Q.idx<9?'下一題':'查看結算'}</button></div>`:''}</div>`;
+},
+result(){
+  if(!Q)return VIEWS.quiz();
+  const tot=Q.exp+Q.bonus;
+  return `<div class="card gilt"><h2>挑戰結算</h2><div class="score">${Q.correct}<span style="font-size:.45em"> / 10</span></div><div class="muted">${LANG[Q.lang].name}${Q.mode==='review'?'・錯題複習':''}　${Q.correct===10?'全部答對，太厲害了！':Q.correct>=7?'表現很好':'再練習幾次會更熟悉'}</div>
+  <div class="rw"><div><b>+${Q.exp}</b>答題 EXP</div><div><b>+${Q.bonus}</b>完成獎勵</div><div><b>+${Q.coins}</b>金幣</div><div><b>+${Q.energy}</b>${SP[Q.spirit].names[S.spirits[Q.spirit].stage-1]}能量</div></div>
+  <div class="small muted" style="margin-top:-6px">本次共獲得 ${tot} EXP</div>
+  ${Q.levelUps.map(l=>`<div class="banner">升級到 Lv.${l}　${titleOf(l)}</div>`).join('')}
+  ${Q.unlocked.map(k=>`<div class="banner">解鎖新精靈：${SP[k].names[0]}（${EL[k].n}屬性）</div>`).join('')}
+  ${Q.badges.map(b=>`<div class="banner">獲得徽章「${b[1]}」：${b[2]}</div>`).join('')}
+  ${Q.wrong.length?`<h3 style="margin-top:12px">本次錯題</h3><ul class="wl">${Q.wrong.map(w=>`<li><span lang="${w.lang}"><b>${wd(w)}</b> ${w.r?'<span class="muted small">'+w.r+'</span>':''}</span><span>${w.m}</span></li>`).join('')}</ul>`:'<p class="muted">這次沒有錯題。</p>'}
+  <div class="row" style="margin-top:14px"><button class="btn gold" data-act="start" data-v="normal">再挑戰一次</button><button class="btn ghost" data-act="start" data-v="review">錯題複習</button><button class="btn ghost" data-act="go" data-v="home">回首頁</button></div></div>`;
+},
+ranch(){
+  const k=S.active,sp=S.spirits[k],info=SP[k],e=EL[k];
+  const th=sp.stage<3?EVO_AT[sp.stage]:ENERGY_CAP,cost=sp.stage<3?EVO_COST[sp.stage]:0;
+  const can=sp.stage<3&&sp.energy>=th,afford=S.coins>=cost;
+  return `<div class="card"><h2>精靈牧場</h2><div class="chips">${SPIRITS.map(s=>{const u=S.spirits[s.k].unlocked;return `<button class="chip ${u?'':'lock'}" data-act="${u?'active':'open'}" data-v="${s.k}" aria-pressed="${s.k===k}"><span class="dot" style="background:${EL[s.k].main}"></span>${u?s.names[S.spirits[s.k].stage-1]:'？？？'}</button>`}).join('')}</div>
+  <div class="ranch"><div class="stage-bg" style="--sbg:${e.bg}"><div id="pet">${spiritSVG(k,sp.stage)}</div></div>
+  <div><h3 style="font-size:24px">${info.names[sp.stage-1]} <span class="pill" style="color:${e.dark}">${e.n}屬性</span></h3>
+  <div class="muted small">${STAGE_LABEL[sp.stage]}・${RARITY[info.rar]}・精靈等級 Lv.${sp.level}</div><p>${info.desc}</p>
+  <div class="small" style="margin-bottom:4px"><b>培育能量</b> ${sp.energy} / ${th}${sp.stage>=3?'（已進化至最高階段）':''}</div>${bar(sp.energy/th*100)}
+  <p class="small muted" style="margin:8px 0">作答答對時，主精靈每題獲得 10 點能量。${sp.stage<3?`進化為「${info.names[sp.stage]}」需要能量 ${th} 與 ${cost} 金幣。`:''}</p>
+  ${sp.stage<3?`<button class="btn gold" data-act="evolve" ${can&&afford?'':'disabled'}>進化（${cost} 金幣）</button><div class="small muted" style="margin-top:6px">${!can?'能量還差 '+(th-sp.energy)+' 點':!afford?'金幣還差 '+(cost-S.coins)+' 枚':'可以進化了！'}</div>`:''}
+  <div class="stages">${[1,2,3].map(s=>`<div class="${s===sp.stage?'on':s>sp.stage?'off':''}">${spiritSVG(k,s)}${info.names[s-1]}<br>${STAGE_LABEL[s]}</div>`).join('')}</div></div></div></div>`;
+},
+dex(){
+  return `<div class="card"><h2>元素圖鑑</h2><div class="elrow">${Object.keys(EL).filter(x=>SP[x]&&SP[x].el===x).map(x=>{const all=SPIRITS.filter(s=>s.el===x),u=all.filter(s=>S.spirits[s.k].unlocked).length,e=EL[x];return `<div style="background:${u?e.bg:'var(--paper)'}"><b style="color:${e.dark}">${e.n}</b><span class="small">${u}/${all.length}</span></div>`}).join('')}</div>
+  <div class="grid">${SPIRITS.map(s=>{const st=S.spirits[s.k],u=st.unlocked;return `<button class="pcard ${u?'':'locked'}" data-act="open" data-v="${s.k}"><div class="${u?'':'sil'}">${spiritSVG(s.k,u?st.stage:1)}</div><div class="nm">${u?s.names[st.stage-1]:'？？？'}</div><div class="small muted">${EL[s.k].n}屬性・${RARITY[s.rar]}</div><div class="small" style="font-weight:700;color:${u?'var(--good)':'var(--brown-l)'}">${u?STAGE_LABEL[st.stage]+'・已解鎖':s.price?s.price+' 金幣':'未解鎖'}</div></button>`}).join('')}</div></div>`;
+},
+review(){
+  const L=S.langs[S.lang],pool=WORDS[S.lang],list=L.wrong.map(id=>pool.find(w=>w.id===id)).filter(Boolean);
+  return `<div class="card"><h2>錯題複習（${LANG[S.lang].name}）</h2>${list.length?`<p>共有 <b>${list.length}</b> 個待複習單字，複習時會優先出題，答對後會從清單移除。</p><div class="row"><button class="btn gold" data-act="start" data-v="review">開始複習</button></div><ul class="wl" style="margin-top:12px">${list.map(w=>`<li><span lang="${w.lang}"><b>${wd(w)}</b> ${w.r?'<span class="muted small">'+w.r+'</span>':''}</span><span>${w.m}</span></li>`).join('')}</ul>`:`<p>${LANG[S.lang].name}的錯題都複習完了。</p><button class="btn gold" data-act="start" data-v="normal">回到一般練習</button>`}</div>`;
+},
+ach(){
+  const li=levelInfo(S.exp);
+  return `<div class="card"><h2>徽章</h2><div class="badges">${BADGES.map(b=>`<div class="badge ${S.badges[b[0]]?'':'off'}"><span class="medal">★</span><div><b>${b[1]}</b><div class="small muted">${b[2]}</div></div></div>`).join('')}</div></div>
+  <div class="card" style="margin-top:14px"><h2>學院探索</h2><div class="areas">${AREAS.map(a=>`<div class="area ${li.L>=a[1]?'':'off'}"><span><b>${a[0]}</b><div class="small">${li.L>=a[1]?a[2]:'？？？'}</div></span><span style="white-space:nowrap;font-weight:700">${li.L>=a[1]?'已開放':'Lv.'+a[1]+' 解鎖'}</span></div>`).join('')}</div>
+  <p class="small muted">稱號：Lv.1 見習學徒 → Lv.5 正式魔法師 → Lv.10 高階魔法師 → Lv.15 星輝大法師</p></div>`;
+},
+set(){
+  const row=l=>{const L=S.langs[l],acc=L.answered?Math.round(L.correct/L.answered*100):0;return `<tr><th>${LANG[l].name}</th><td>${L.answered}</td><td>${acc}%</td><td>${L.best}</td><td>${L.sessions}</td><td>${L.wrong.length}</td></tr>`};
+  return `<div class="card"><h2>設定</h2><h3>學習語言</h3><div class="seg" role="group" aria-label="學習語言">${LANGS.map(l=>`<button data-act="lang" data-v="${l}" aria-pressed="${S.lang===l}">${LANG[l].name}</button>`).join('')}</div>
+  <p class="small muted">四種語言的進度、統計與錯題各自獨立保存，切換不會互相覆蓋。</p>
+  <h3 style="margin-top:14px">學習統計</h3><div style="overflow-x:auto"><table class="st"><tr><th></th><th>作答</th><th>正確率</th><th>最高連對</th><th>完成挑戰</th><th>錯題</th></tr>${LANGS.map(row).join('')}</table></div>
+  <h3 style="margin-top:18px">主精靈</h3><label class="row" style="gap:8px;cursor:pointer"><input type="checkbox" id="askSp" data-act="ask" ${S.settings.ask?'checked':''}> 每次開始試煉前，先讓我選擇主精靈</label><p class="small muted">預設關閉。平常可以在首頁或精靈牧場直接切換主精靈。</p>
+  <h3 style="margin-top:18px">重置遊戲資料</h3><div id="resetbox"><button class="btn ghost" data-act="resetAsk">重置全部進度</button></div></div>`;
+}};
+function draw(){
+  $('#topbar').innerHTML=topbar();$('#nav').innerHTML=nav();$('#view').innerHTML=(SUB.includes(page)?'<button class="btn ghost back" data-act="go" data-v="more" style="margin-bottom:12px;padding:6px 16px;font-size:14px">← 更多</button>':'')+VIEWS[page]();$('#aside').innerHTML=aside();
+}
+function toast(t){const el=$('#toast');el.innerHTML=`<div class="toast" role="status">${t}</div>`;clearTimeout(toast.t);toast.t=setTimeout(()=>{el.innerHTML=''},2600)}
+function openSpirit(k){
+  const s=SP[k],st=S.spirits[k],e=EL[k],u=st.unlocked;
+  $('#modal').innerHTML=`<div class="modal" data-act="close"><div class="card gilt" role="dialog" aria-modal="true" aria-label="${u?s.names[st.stage-1]:'未解鎖精靈'}"><button class="x" data-act="close" aria-label="關閉">✕</button>
+  <div style="max-width:200px;margin:0 auto" class="${u?'':'sil'}">${spiritSVG(k,u?st.stage:1)}</div>
+  <h2 style="text-align:center;margin-top:6px">${u?s.names[st.stage-1]:'？？？'}</h2>
+  <div class="small muted" style="text-align:center">${e.n}屬性・${RARITY[s.rar]}${u?'・'+STAGE_LABEL[st.stage]+'・Lv.'+st.level:''}</div>
+  ${u?`<p>${s.desc}</p><div class="small"><b>培育能量</b> ${st.energy}${st.stage<3?' / '+EVO_AT[st.stage]:''}</div>${bar(st.stage<3?st.energy/EVO_AT[st.stage]*100:100)}
+  <div class="stages">${[1,2,3].map(n=>`<div class="${n===st.stage?'on':n>st.stage?'off':''}">${spiritSVG(k,n)}${s.names[n-1]}<br>${STAGE_LABEL[n]}</div>`).join('')}</div>
+  <div class="row" style="margin-top:12px;justify-content:center">${S.active===k?'<span class="pill" style="color:var(--good)">目前主精靈</span>':`<button class="btn" data-act="active" data-v="${k}">設為主精靈</button>`}</div>`
+  :(s.price?`<p>${s.desc}</p><p>取得方式：<b>${s.price} 金幣購買</b></p><div class="small muted" style="margin-bottom:4px">目前金幣 ${S.coins} / ${s.price}</div>${bar(Math.min(S.coins,s.price)/s.price*100,'gold')}<div class="row" style="margin-top:12px;justify-content:center"><button class="btn gold" data-act="buy" data-v="${k}" ${S.coins>=s.price?'':'disabled'}>購買（${s.price} 金幣）</button></div>`:`<p>取得條件：<b>${s.cond.text}</b></p><div class="small muted" style="margin-bottom:4px">目前進度 ${Math.min(s.cond.cur(),s.cond.max)} / ${s.cond.max}</div>${bar(Math.min(s.cond.cur(),s.cond.max)/s.cond.max*100)}`)}</div></div>`;
+}
+
+/* ---------- 選擇本次主精靈 ---------- */
+let pick=null;
+function launch(v){Q=buildQuiz(v);page='quiz';draw();window.scrollTo(0,0)}
+function openPicker(){
+  const un=SPIRITS.filter(s=>S.spirits[s.k].unlocked);
+  $('#modal').innerHTML=`<div class="modal" data-act="close"><div class="card gilt" role="dialog" aria-modal="true" aria-label="選擇本次主精靈"><button class="x" data-act="close" aria-label="關閉">✕</button>
+  <h2>選擇本次主精靈</h2><p class="small muted" style="margin-top:-4px">答對題目獲得的培育能量，會全部給這隻精靈。</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">${un.map(s=>{const st=S.spirits[s.k],th=st.stage<3?EVO_AT[st.stage]:ENERGY_CAP;return `<button class="pcard" data-act="sel" data-v="${s.k}" aria-pressed="${pick.sel===s.k}" style="${pick.sel===s.k?'border-color:var(--purple);background:var(--purple-l)':''}">${spiritSVG(s.k,st.stage)}<div class="nm" style="font-size:15px">${s.names[st.stage-1]}</div><div class="small muted">Lv.${st.level}・${EL[s.k].n}</div><div class="bar" style="height:8px;margin-top:4px"><i style="width:${st.energy/th*100}%"></i></div></button>`}).join('')}</div>
+  <div class="row" style="margin-top:14px;justify-content:center"><button class="btn gold big" data-act="launch">出發！</button></div></div></div>`;
+}
+
+/* ---------- 事件 ---------- */
+const ACT={
+ go(v){if(v==='quiz'&&Q&&Q.finished){Q=null}if(v!=='fast'){stopFast();F=null}else if(F&&F.over){F=null}page=v;draw();window.scrollTo(0,0)},
+ lang(v){if(S.lang===v)return;S.lang=v;Q=null;stopFast();F=null;save();if(page==='quiz'||page==='result')page='home';draw();toast('已切換為'+LANG[v].name)},
+ fstart(){startFast()},
+ fyes(){fastAnswer(true)},
+ fno(){fastAnswer(false)},
+ start(v){
+  const un=SPIRITS.filter(s=>S.spirits[s.k].unlocked);
+  if(!S.settings.ask||un.length<2){launch(v);return}
+  pick={mode:v,sel:S.active};openPicker();
+ },
+ sel(v){pick.sel=v;openPicker()},
+ launch(){const m=pick.mode;S.active=pick.sel;save();$('#modal').innerHTML='';launch(m)},
+ pick(v){answer(+v)},
+ next(){nextQ()},
+ speak(){try{const q=Q&&Q.qs[Q.idx];if(!q)return;const u=new SpeechSynthesisUtterance(q.w.w);u.lang=LANG[Q.lang].tts;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){toast('此瀏覽器不支援發音')}},
+ active(v){if(!S.spirits[v].unlocked)return;S.active=v;save();$('#modal').innerHTML='';draw()},
+ open(v){openSpirit(v)},
+ buy(v){const s=SP[v],st=S.spirits[v];if(st.unlocked||!s.price||S.coins<s.price)return;S.coins-=s.price;st.unlocked=true;checkBadges();save();draw();openSpirit(v);toast('購買成功！'+s.names[0]+' 加入牧場')},
+ ask(){S.settings.ask=!S.settings.ask;S.settings.askSet=true;save();draw()},
+ close(){$('#modal').innerHTML=''},
+ evolve(){
+  const sp=S.spirits[S.active];if(sp.stage>=3)return;
+  const th=EVO_AT[sp.stage],cost=EVO_COST[sp.stage];
+  if(sp.energy<th||S.coins<cost)return;
+  S.coins-=cost;sp.stage++;S.stats.evolutions++;checkBadges();
+  save();draw();const p=$('#pet');if(p)p.classList.add('pop');
+  toast('進化成功！'+SP[S.active].names[sp.stage-1]);
+ },
+ resetAsk(){$('#resetbox').innerHTML='<p class="small">這會清除所有等級、金幣、精靈與錯題，無法復原。</p><div class="row"><button class="btn" style="background:var(--bad);border-color:#a23d30;box-shadow:0 4px 0 #a23d30" data-act="resetYes">確定重置</button><button class="btn ghost" data-act="resetNo">取消</button></div>'},
+ resetNo(){draw()},
+ resetYes(){S=defaults();Q=null;try{localStorage.removeItem(KEY)}catch(e){}save();page='home';draw();toast('已重置遊戲資料')}
+};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');if(!t)return;
+  if(t.classList.contains('modal')&&e.target!==t)return; // 點在彈窗內容上不關閉
+  if(ACT[t.dataset.act])ACT[t.dataset.act](t.dataset.v);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')ACT.close();
+  if(page==='fast'&&F&&!F.over){if(e.key==='ArrowRight')fastAnswer(true);else if(e.key==='ArrowLeft')fastAnswer(false);return}
+  if(page!=='quiz'||!Q||Q.finished)return;
+  if(e.key>='1'&&e.key<='4')answer(+e.key-1);
+  else if(e.key==='Enter'&&Q.qs[Q.idx].done)nextQ();
+});
+checkUnlocks();checkBadges();save();draw();
+window.__wordmon={get S(){return S},get Q(){return Q},get F(){return F},get W(){return WORDS},get SP(){return SPIRITS}};
+})();
+</script>
+
+</html>
